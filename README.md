@@ -1,6 +1,6 @@
-# Wheelleg
+# WheelLeg
 
-No description provided
+wheelLeg chassis Controller
 
 ## Required Hardware
 None
