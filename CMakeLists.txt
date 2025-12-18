@@ -1,4 +1,4 @@
-# CMakeLists.txt for Wheelleg
+# CMakeLists.txt for WheelLeg
 
 # Add module to include path
 target_include_directories(xr PUBLIC ${CMAKE_CURRENT_LIST_DIR})
