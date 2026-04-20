@@ -34,6 +34,12 @@ jobs:
           repository: QDU-Robomaster/LegVmc
           path: Modules/LegVmc
 
+      - name: Checkout Motor
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/Motor
+          path: Modules/Motor
+
       - name: Checkout DMMotor
         uses: actions/checkout@v4
         with:
