@@ -4,12 +4,13 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: '0 3 1 * *'  # 每月1日凌晨3点（UTC）自动触发
+    - cron: '0 3 1 * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
+      # 使用 Linux 镜像进行语法和逻辑验证编译
       image: ghcr.io/xrobot-org/docker-image-linux:main
       options: --user 0
 
@@ -17,11 +18,47 @@ jobs:
       XR_MODULE_NAME: ${{ github.event.repository.name }}
 
     steps:
-      - name: Checkout current module repo to ./Modules/${{ env.XR_MODULE_NAME }}
+      # 1. 检出当前仓库
+      - name: Checkout current module
         uses: actions/checkout@v4
         with:
           path: Modules/${{ env.XR_MODULE_NAME }}
 
+      # 2. 检出 Manifest 中声明的依赖项
+      # 注意：这里假设这些库都在 qdu-future 或 QDU-Robomaster 组织下
+      # 如果 URL 不对，请根据实际情况修改 repository 字段
+
+      - name: Checkout LegVmc
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/LegVmc
+          path: Modules/LegVmc
+
+      - name: Checkout DMMotor
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/DMMotor
+          path: Modules/DMMotor
+
+      - name: Checkout RMMotor
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/RMMotor # 或者是 QDU-Robomaster/RMMotor
+          path: Modules/RMMotor
+
+      - name: Checkout CMD
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/CMD     # 或者是 QDU-Robomaster/CMD
+          path: Modules/CMD
+
+      - name: Checkout AtomImuCan
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/AtomImuCan
+          path: Modules/AtomImuCan
+
+      # 3. 创建最小化的编译环境 (main.cpp 和 CMakeLists.txt)
       - name: Create main.cpp
         run: |
           cat > main.cpp <<'EOF'
@@ -31,8 +68,9 @@ jobs:
 
           int main() {
               LibXR::PlatformInit();
-              LibXR::STDIO::Printf("This is XRobot Module Template Test\n");
+              LibXR::STDIO::Printf("XRobot WheelLeg Build Test\n");
               LibXR::HardwareContainer hw;
+              // 在这里，XRobotMain 会实例化你在 Manifest 中定义的依赖和模块
               XRobotMain(hw);
               return 0;
           }
@@ -41,58 +79,84 @@ jobs:
       - name: Create minimal CMakeLists.txt
         run: |
           cat > CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.10)
           project(xrobot_mod_test CXX)
           set(CMAKE_CXX_STANDARD 17)
-          add_executable(xr_test main.cpp)
+
+          # 定义 Modules 目录
           set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules/)
+
+          # 添加 libxr (下面会 clone)
           add_subdirectory(libxr)
-          target_include_directories(xr_test PUBLIC $<TARGET_PROPERTY:xr,INTERFACE_INCLUDE_DIRECTORIES> ${CMAKE_SOURCE_DIR}/User)
+
+          add_executable(xr_test main.cpp)
+
+          # 包含路径：libxr, User 配置, 以及生成的代码
+          target_include_directories(xr_test PUBLIC
+              $<TARGET_PROPERTY:xr,INTERFACE_INCLUDE_DIRECTORIES>
+              ${CMAKE_SOURCE_DIR}/User
+          )
           target_link_libraries(xr_test PUBLIC xr)
           EOF
 
+      # 4. 准备 LibXR 和工具链
       - name: Pull libxr to ./libxr
         run: git clone --depth=1 https://github.com/Jiu-xiao/libxr ./libxr
 
       - name: Setup Python & Install deps
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install pyyaml requests
+          pip3 install pyyaml requests xrobot libxr
 
       - name: Add XRobot tools to PATH
-        run: |
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Install xrobot toolchain
-        run: |
-          pip3 install xrobot libxr
-
+      # 5. 初始化 XRobot 项目
       - name: Run xrobot_setup
-        run: |
-          xrobot_setup || true
+        run: xrobot_setup || true
 
       - name: Run xrobot_init_mod
-        run: |
-          xrobot_init_mod
+        run: xrobot_init_mod
 
-      - name: Add BlinkLED module
-        run: |
-          xrobot_add_mod BlinkLED --instance-id BlinkLED_0
+      # 6. 注册模块
+      # 必须先注册依赖模块，以便 xrobot 解析依赖关系
+      # 注意：manifest 中依赖了 'can1', 'can2', 'cmd'
+      # 'cmd' 由 CMD 模块提供。can1/can2 通常由 BSP 提供，在 Linux 模拟环境下我们可能需要手动忽略硬件检查或确保 libxr 提供了虚拟 CAN
 
-      - name: Add this repo module
+      - name: Add Dependencies
         run: |
-          xrobot_add_mod ${{ env.XR_MODULE_NAME }} && cat User/xrobot.yaml
+          # 注册 CMD 模块，instance-id 必须匹配 manifest 中的 "cmd: 'cmd'"
+          xrobot_add_mod CMD --instance-id cmd
+          xrobot_add_mod RMMotor --instance-id left_wheel
+          xrobot_add_mod RMMotor --instance-id right_wheel
 
-      - name: Generate main again
+          # 注册其他依赖 (如果是纯库模块，可能不需要 add_mod,但为了生成胶水代码通常建议添加)
+          xrobot_add_mod LegVmc
+          xrobot_add_mod DMMotor
+          xrobot_add_mod AtomImuCan
+
+      - name: Add Target Module (WheelLegChassis)
         run: |
-          xrobot_setup
+          # 添加你的主模块
+          # xrobot 会解析 Wheelleg.hpp 中的 MANIFEST V2 并生成 User/xrobot.yaml
+          xrobot_add_mod ${{ env.XR_MODULE_NAME }} --instance-id chassis_controller
 
+      - name: Inspect Generated Config (Debug)
+        run: cat User/xrobot.yaml
+
+      # 7. 再次运行 setup 以生成最终的 xrobot_main.hpp
+      - name: Generate Glue Code
+        run: xrobot_setup
+
+      # 8. 编译
       - name: Build
         run: |
           mkdir -p build
           cd build
-          cmake ..
-          make
+          cmake .. -G Ninja
+          cmake --build .
 
+      # 9. 自动打 Tag (仅在 push 到主分支且编译成功时)
       - name: Create Tag via GitHub API
         if: ${{ success() && github.event_name != 'pull_request' }}
         uses: actions/github-script@v7
@@ -108,11 +172,7 @@ jobs:
             const MM = String(date.getUTCMinutes()).padStart(2, '0');
             const SS = String(date.getUTCSeconds()).padStart(2, '0');
             const tagName = `${tagPrefix}${yyyy}${mm}${dd}-${HH}${MM}${SS}`;
-
-            // 获取当前 commit sha
             const sha = process.env.GITHUB_SHA;
-
-            // 创建 tag reference
             await github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
