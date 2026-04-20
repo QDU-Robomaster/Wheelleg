@@ -34,6 +34,12 @@ jobs:
           repository: QDU-Robomaster/LegVmc
           path: Modules/LegVmc
 
+      - name: Checkout Motor
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/Motor
+          path: Modules/Motor
+
       - name: Checkout DMMotor
         uses: actions/checkout@v4
         with:
@@ -57,6 +63,18 @@ jobs:
         with:
           repository: QDU-Robomaster/AtomImuCan
           path: Modules/AtomImuCan
+
+      - name: Checkout Referee
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/Referee
+          path: Modules/Referee
+
+      - name: Checkout SuperPower
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/SuperPower
+          path: Modules/SuperPower
 
       # 3. 创建最小化的编译环境 (main.cpp 和 CMakeLists.txt)
       - name: Create main.cpp
