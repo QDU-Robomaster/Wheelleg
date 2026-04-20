@@ -1336,16 +1336,7 @@ void SetMode(Mode mode) {
      current_mode_ = mode;
 }
 
-  float AdaptFilter(float wz, float gyro_z, float speed, float accl,
-                    float dt_) {
-    af_t_.xhatminus = af_t_.xhat + accl * dt_;
-    af_t_.error = fabs(wz - gyro_z);
-    af_t_.k1 = 0.00182238811503557f *
-               powf(M_E, 8.78806145711193f * af_t_.error / 3.0f);
-    af_t_.k1 = std::clamp(af_t_.k1, 0.0f, 1.0f);
-    af_t_.xhat = speed + af_t_.k1 * (af_t_.xhatminus - speed);
-    return af_t_.xhat;
-  }
+
 
 
 
