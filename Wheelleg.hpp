@@ -296,12 +296,6 @@ enum class WheellegEvent : uint8_t {
     wheelleg->EventHandler(event_id);
     },this);
 
-    void (*InitUi)(Wheelleg*) = [](Wheelleg* wheelleg) {
-      wheelleg->InitUi();
-    };
-      auto InitUi_ = LibXR::Timer::CreateTask(InitUi, this, 35);
-      LibXR::Timer::Add(InitUi_);
-      LibXR::Timer::Start(InitUi_);
 
 
 
@@ -1307,133 +1301,7 @@ void Control() {
 }
 }
 
-void InitUi() {
 
-    const uint16_t id = referee_->GetRobotID();
-    const uint16_t client = referee_->GetClientID(id);
-    Referee::UIFigureOp ADD_OP = Referee::UIFigureOp::UI_OP_MODIFY;
-    if(this->ui_dyn_step_%20==0){ADD_OP = Referee::UIFigureOp::UI_OP_ADD;}
-
-
-    switch (ui_step_) {
-        case 0: {
-
-            const char* mode_str = "RELX";
-            switch (current_mode_) {
-                case Mode::RELAX: mode_str = "RELX"; break;
-                case Mode::RESET: mode_str = "REST"; break;
-                case Mode::ROTOR: mode_str = "ROTO"; break;
-                case Mode::STAND: mode_str = "FOLW"; break;
-                case Mode::JUMP:  mode_str = "JUMP"; break;
-                case Mode::STAIR: mode_str = "STAI"; break;
-                default: break;
-
-            }
-
-            Referee::UICharacter char_fig{};
-            referee_->FillCharacter(char_fig, "WM", ADD_OP, UI_LAYER_CHASSIS,
-                                    Referee::UIColor::UI_COLOR_CYAN, 27,
-                                    2, 1345, 764, mode_str);
-            referee_->SendUICharacter(id, client, char_fig);
-            break;
-        }
-        case 1: {
-
-            uint16_t dot_x = static_cast<uint16_t>(
-                1920 / 2 + 260 * sinf(body_argum_.yaw_));
-            uint16_t dot_y = static_cast<uint16_t>(
-                1080 / 2 + 260 * cosf(body_argum_.yaw_));
-            Referee::UIFigure fig{};
-            referee_->FillCircle(fig, "WY", ADD_OP, UI_LAYER_CHASSIS,
-                                 Referee::UIColor::UI_COLOR_CYAN,
-                                   7, dot_x, dot_y,
-                                 20);
-            referee_->SendUIFigure(id, client, fig);
-            break;
-        }
-        case 2: {
-
-            constexpr uint16_t PIT_LEN = 120;
-            uint16_t pit_cx = static_cast<uint16_t>(1690 - PIT_LEN * sinf(-body_argum_.pit_-1.57f));
-            uint16_t pit_cy = static_cast<uint16_t>(480 + PIT_LEN * cosf(-body_argum_.pit_-1.57f));
-            uint16_t pit_x2 = static_cast<uint16_t>(1690 + PIT_LEN * sinf(-body_argum_.pit_-1.57f));
-            uint16_t pit_y2 = static_cast<uint16_t>(480 - PIT_LEN * cosf(-body_argum_.pit_-1.57f));
-            Referee::UIFigure pit_fig{};
-            referee_->FillLine(pit_fig, "WP", ADD_OP, UI_LAYER_CHASSIS,
-                               Referee::UIColor::UI_COLOR_CYAN, 2,
-                               pit_cx, pit_cy, pit_x2, pit_y2);
-            referee_->SendUIFigure(id, client, pit_fig);
-            break;
-        }
-        case 3: {
-
-            uint16_t leg_x1 = 1690;
-            uint16_t leg_y1 = 480;
-
-            float leg_px = leg_argum_[0].L0 * 400;
-            uint16_t leg_x2 = static_cast<uint16_t>(leg_x1 - leg_px * sinf(leg_argum_[0].theta));
-            uint16_t leg_y2 = static_cast<uint16_t>(leg_y1 - leg_px * cosf(leg_argum_[0].theta));
-            Referee::UIFigure leg_fig{};
-            referee_->FillLine(leg_fig, "WL", ADD_OP, UI_LAYER_CHASSIS,
-                               Referee::UIColor::UI_COLOR_ORANGE, 3,
-                               leg_x1, leg_y1, leg_x2, leg_y2);
-            referee_->SendUIFigure(id, client, leg_fig);
-            break;
-        }
-        case 4: {
-
-            uint16_t leg_x3 = 1700;
-            uint16_t leg_y3 = 480;
-            float leg_px1 = leg_argum_[1].L0 * 400;
-            uint16_t leg_x4 = static_cast<uint16_t>(leg_x3 - leg_px1 * sinf(leg_argum_[1].theta));
-            uint16_t leg_y4 = static_cast<uint16_t>(leg_y3 - leg_px1 * cosf(leg_argum_[1].theta));
-            Referee::UIFigure leg_fig{};
-            referee_->FillLine(leg_fig, "WR", ADD_OP, UI_LAYER_CHASSIS,
-                               Referee::UIColor::UI_COLOR_GREEN, 3,
-                               leg_x3, leg_y3, leg_x4, leg_y4);
-            referee_->SendUIFigure(id, client, leg_fig);
-            break;
-        }
-        case 5: {
-            Referee::UIFigure line_fig{};
-            referee_->FillLine(line_fig, "WSL", ADD_OP, UI_LAYER_CHASSIS,
-                               Referee::UIColor::UI_COLOR_CYAN,  1,
-                               400, 140, 560, 500);
-            referee_->SendUIFigure(id, client, line_fig);
-            break;
-        }
-        case 6: {
-
-            Referee::UIFigure line_fig{};
-            referee_->FillLine(line_fig, "WSR", ADD_OP, UI_LAYER_CHASSIS,
-                               Referee::UIColor::UI_COLOR_CYAN,  1,
-                               1420, 140, 1360, 500);
-            referee_->SendUIFigure(id, client, line_fig);
-            this->ui_dyn_step_  = (this->ui_dyn_step_+1)%20;
-            break;
-
-        }
-
-        case 7 :
-      {
-        Referee::UIFigure spfig{};
-        Referee::UIColor cap_state;
-        if (body_argum_.cap_energy<0.35f){cap_state = Referee::UIColor::UI_COLOR_ORANGE;}
-        else {cap_state = Referee::UIColor::UI_COLOR_CYAN;}
-        referee_->FillLine(spfig, "SP", ADD_OP, UI_LAYER_CHASSIS,
-                               cap_state,  20,
-                               400, 200, static_cast<uint16_t>(400+1120*body_argum_.cap_energy), 200);
-    referee_->SendUIFigure(id, client, spfig);
-      }
-        default:
-            break;
-    }
-
-
-    this->ui_step_ = (this->ui_step_+1)%8;
-
-
-}
 
   /**
    * @brief 获取底盘的事件处理器
@@ -1630,8 +1498,6 @@ float RampForaward(float current, float target, float max_step) {
     float dt_ = 0.0f;
 
     uint64_t wheel_online_start_time_=0;
-    uint16_t ui_step_ = 0;
-    uint32_t ui_dyn_step_ =0;
 
     LibXR::Mutex mutex_;
     LibXR::Thread thread_;
