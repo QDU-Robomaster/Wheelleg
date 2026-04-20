@@ -150,7 +150,6 @@ depends:
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <memory>
 #include "Referee.hpp"
 #include "app_framework.hpp"
 #include "libxr_def.hpp"
@@ -1302,7 +1301,6 @@ void Control() {
 }
 
 
-
   /**
    * @brief 获取底盘的事件处理器
    * @return LibXR::Event& 事件处理器的引用
@@ -1360,53 +1358,10 @@ uint8_t GetCapEnergy() {
     return 0;
 }
 
-void OnMonitor() override {}
 
-float AdaptFilter(float wz, float gyro_z, float speed, float accl, float dt_) {
-  adaptfilter_argum_.xhatminus = adaptfilter_argum_.xhat + accl * dt_;
-  adaptfilter_argum_.error = fabs(wz - gyro_z);
-  adaptfilter_argum_.k1 = 0.00182238811503557f * powf(M_E, 8.78806145711193f * adaptfilter_argum_.error / 3.0f);
-  adaptfilter_argum_.k1 = std::clamp(adaptfilter_argum_.k1, 0.0f, 1.0f);
-  adaptfilter_argum_.xhat = speed + adaptfilter_argum_.k1 * (adaptfilter_argum_.xhatminus - speed);
-  return adaptfilter_argum_.xhat;
-}
 
-float RangeAnglePI(float angle) {
-  while (angle > M_PI) {
-    angle -= M_2PI;
-  }
-  while (angle < -M_PI) {
-    angle += M_2PI;
-  }
-  return angle;
-}
 
-float RampTowards(float current, float target, float max_step) {
-  float diff = target - current;
-  if (diff > max_step) {
-    return current + max_step;
-  }
-  if (diff < -max_step) {
-    return current - max_step;
-  }
-  return target;
-}
-
-float RampBack(float current, float target, float max_step) {
-  float diff = fabsf(target - current);
-  if (diff > max_step) {
-    return current - max_step;
-  }
-  return target;
-}
-
-float RampForaward(float current, float target, float max_step) {
-  float diff = fabsf(target - current);
-  if (diff > max_step) {
-    return current + max_step;
-  }
-  return target;
-}
+ void OnMonitor() override {}
 
  private:
     WheellegParam param_;
@@ -1499,6 +1454,44 @@ float RampForaward(float current, float target, float max_step) {
 
     uint64_t wheel_online_start_time_=0;
 
+
     LibXR::Mutex mutex_;
     LibXR::Thread thread_;
+
+
+
+/*---------------工具函数-------------------------*/
+float AdaptFilter(float wz, float gyro_z, float speed,float accl, float dt_){
+  /*预测值*/
+  adaptfilter_argum_.xhatminus = adaptfilter_argum_.xhat + accl * dt_;
+  /*误差大小*/
+  adaptfilter_argum_.error = fabs(wz - gyro_z);
+  /*权重计算*/
+  adaptfilter_argum_.k1 = 0.00182238811503557f * powf(M_E, 8.78806145711193f * adaptfilter_argum_.error / 3.0f);
+  adaptfilter_argum_.k1=std::clamp(adaptfilter_argum_.k1, 0.0f, 1.0f);
+  /*加权求和*/
+  adaptfilter_argum_.xhat = speed + adaptfilter_argum_.k1 * (adaptfilter_argum_.xhatminus - speed);
+  return adaptfilter_argum_.xhat;}
+
+float RangeAnglePI(float angle)
+{ while (angle > M_PI) {
+    angle -= M_2PI;}
+  while (angle < -M_PI) {
+    angle += M_2PI;}
+  return angle;}
+
+float RampTowards(float current, float target, float max_step) {
+    float diff = target - current;
+    if (diff > max_step) {return current + max_step;}
+    if (diff < -max_step) {return current - max_step;}
+    return target;}
+float RampBack(float current, float target, float max_step) {
+    float diff = fabsf(target - current);
+    if (diff > max_step) {return current - max_step;}
+    return target;}
+
+float RampForaward(float current, float target, float max_step) {
+    float diff = fabsf(target - current);
+    if (diff > max_step) {return current + max_step;}
+    return target;}
 };
