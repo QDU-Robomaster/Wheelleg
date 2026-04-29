@@ -562,11 +562,11 @@ class Wheelleg : public LibXR::Application {
     /* 实际支持力计算 */
     leg_argu_[0].Fn = vmc_left_->GndDetector(
         hip_motor_[0]->GetTor(), hip_motor_[1]->GetTor(), accl_.z * 9.81f,
-        leg_argu_[0].theta, leg_argu_[0].d_theta);
+        leg_argu_[0].theta, leg_argu_[0].d_theta, dt_);
 
     leg_argu_[1].Fn = vmc_right_->GndDetector(
         hip_motor_[3]->GetTor(), hip_motor_[2]->GetTor(), accl_.z * 9.81f,
-        leg_argu_[1].theta, leg_argu_[1].d_theta);
+        leg_argu_[1].theta, leg_argu_[1].d_theta, dt_);
     /*离地检测处理*/
     //       onground0_flag_ = (leg_argu_[0].Fn > 40.0f);
     //       onground1_flag_ = (leg_argu_[1].Fn > 40.0f);
