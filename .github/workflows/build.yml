@@ -46,6 +46,12 @@ jobs:
           repository: QDU-Robomaster/RMMotor # 或者是 QDU-Robomaster/RMMotor
           path: Modules/RMMotor
 
+      - name: Checkout Motor
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/Motor
+          path: Modules/Motor
+
       - name: Checkout CMD
         uses: actions/checkout@v4
         with:
@@ -184,4 +190,3 @@ jobs:
               sha: sha
             });
             console.log(`Created tag: ${tagName} on sha: ${sha}`);
-
