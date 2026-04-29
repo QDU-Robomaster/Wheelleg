@@ -165,6 +165,10 @@ depends:
 #include "thread.hpp"
 #include "timebase.hpp"
 
+#ifndef M_2PI
+#define M_2PI (2.0f * static_cast<float>(M_PI))
+#endif
+
 class Wheelleg : public LibXR::Application {
  public:
   enum class WheellegEvent : uint8_t {
@@ -404,7 +408,9 @@ class Wheelleg : public LibXR::Application {
     /* 左右腿摆角与腿长计算 */
     /* 注意极性 */
     auto result0 = vmc_left_->VMCsolve(-leg_argu_[0].phi1_, -leg_argu_[0].phi4_,
-                                       -pit_, gyro_.x, dt_);
+                                       -pit_, gyro_.x,
+                                       -hip_motor_[1]->GetOmega(),
+                                       -hip_motor_[0]->GetOmega(), dt_);
     leg_argu_[0].L0 = std::get<0>(result0);
     leg_argu_[0].d_L0 = std::get<1>(result0);
     leg_argu_[0].theta = -std::get<2>(result0);
@@ -417,7 +423,8 @@ class Wheelleg : public LibXR::Application {
     }
 
     auto result1 = vmc_right_->VMCsolve(
-        -leg_argu_[1].phi1_, -leg_argu_[1].phi4_, -pit_, gyro_.x, dt_);
+        -leg_argu_[1].phi1_, -leg_argu_[1].phi4_, -pit_, gyro_.x,
+        -hip_motor_[3]->GetOmega(), -hip_motor_[2]->GetOmega(), dt_);
     leg_argu_[1].L0 = std::get<0>(result1);
     leg_argu_[1].d_L0 = std::get<1>(result1);
     leg_argu_[1].theta = -std::get<2>(result1);
