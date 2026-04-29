@@ -68,7 +68,7 @@ jobs:
 
           int main() {
               LibXR::PlatformInit();
-              LibXR::STDIO::Printf("XRobot WheelLeg Build Test\n");
+              LibXR::STDIO::Printf<"XRobot WheelLeg Build Test\n">();
               LibXR::HardwareContainer hw;
               // 在这里，XRobotMain 会实例化你在 Manifest 中定义的依赖和模块
               XRobotMain(hw);
