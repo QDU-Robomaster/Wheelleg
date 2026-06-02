@@ -79,6 +79,12 @@ jobs:
           repository: QDU-Robomaster/CMD
           path: Modules/CMD
 
+      - name: Checkout LegVmc module
+        uses: actions/checkout@v4
+        with:
+          repository: QDU-Robomaster/LegVmc
+          path: Modules/LegVmc
+
       - name: Checkout PowerControl module
         uses: actions/checkout@v4
         with:
