@@ -598,17 +598,6 @@ class Wheelleg : public LibXR::Application {
           body_argum_.target_x = 0.0f;
           body_argum_.xhat = 0.0f;
         }
-
-        if (chassis_cmd_.self_define == CMD::ChasStat::SWITCHYAW) {
-          body_argum_.yaw_switch_time += 1;
-          if (body_argum_.yaw_switch_time > 10) {
-            body_argum_.yaw_switch_flag = true;
-          }
-          if (body_argum_.yaw_switch_time > 100) {
-            body_argum_.yaw_switch_flag = false;
-            body_argum_.yaw_switch_time = 0;
-          }
-        }
         // if (body_argum_.yaw_switch_flag) {
         //  body_argum_.target_yaw += 3.1416f;
         // }

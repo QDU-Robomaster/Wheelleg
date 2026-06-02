@@ -127,14 +127,8 @@ jobs:
       - name: Add modules
         run: |
           xrobot_add_mod BlinkLED --instance-id BlinkLED_0
-          xrobot_add_mod RMMotor --instance-id motor_wheel_0
-          xrobot_add_mod RMMotor --instance-id motor_wheel_1
-          xrobot_add_mod RMMotor --instance-id motor_wheel_2
-          xrobot_add_mod RMMotor --instance-id motor_wheel_3
-          xrobot_add_mod RMMotor --instance-id motor_steer_0
-          xrobot_add_mod RMMotor --instance-id motor_steer_1
-          xrobot_add_mod RMMotor --instance-id motor_steer_2
-          xrobot_add_mod RMMotor --instance-id motor_steer_3
+          xrobot_add_mod RMMotor --instance-id left_wheel
+          xrobot_add_mod RMMotor --instance-id right_wheel
           xrobot_add_mod CMD --instance-id cmd
           xrobot_add_mod SuperPower --instance-id superpower
           xrobot_add_mod PowerControl --instance-id power_control
