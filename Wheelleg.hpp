@@ -4,8 +4,9 @@
 /* === MODULE MANIFEST V2 ===
 module_description: WheelLegChassis controller
 constructor_args:
-    cmd: 'cmd'
-    referee: 'Referee_0'
+    cmd: '@&cmd'
+    referee: '@&ref'
+    superpower: '@&superpower'
     task_stack_depth: 4096
     vmc_left_param:
       leg_4: 0.21
