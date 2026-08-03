@@ -4,9 +4,9 @@
 /* === MODULE MANIFEST V2 ===
 module_description: WheelLegChassis controller
 constructor_args:
-    cmd: '@cmd'
-    referee: '@ref'
-    superpower: '@superpower'
+    cmd: '@nullptr'
+    referee: '@nullptr'
+    superpower: '@nullptr'
     task_stack_depth: 4096
     vmc_left_param:
       leg_4: 0.21
@@ -80,8 +80,8 @@ constructor_args:
       reverse: true
       can_id: 3
       can_bus_name: can1
-    wheel_left_param: '@&left_wheel'
-    wheel_right_param: '@&right_wheel'
+    wheel_left_param: '@nullptr'
+    wheel_right_param: '@nullptr'
     PARAM:
       mech_zero: [0.0, 0.0, 0.0, 0.0]
       static_L0: [0.15, 0.15]
@@ -143,6 +143,8 @@ depends:
   - qdu-future/RMMotor
   - qdu-future/CMD
   - qdu-future/AtomImuCan
+  - qdu-future/Referee
+  - qdu-future/SuperPower
 === END MANIFEST === */
 // clang-format on
 
@@ -236,7 +238,7 @@ class Wheelleg : public LibXR::Application {
    * @param WheellegParam 机体参数
    */
   Wheelleg(LibXR::HardwareContainer& hw, LibXR::ApplicationManager& app,
-           CMD& cmd, Referee& referee, SuperPower& superpower,
+           CMD* cmd, Referee* referee, SuperPower* superpower,
            uint32_t task_stack_depth, LegVmc::Param vmc_left_param,
            LegVmc::Param vmc_right_param,
            LibXR::PID<float>::Param pid_leglength_left_param,
@@ -250,16 +252,23 @@ class Wheelleg : public LibXR::Application {
            DMMotor::Param hip_rightback_param, RMMotor* wheel_left,
            RMMotor* wheel_right, const WheellegParam& PARAM)
       : param_(PARAM),
-        vmc_left_(new LegVmc(hw, app, vmc_left_param)),
-        vmc_right_(new LegVmc(hw, app, vmc_right_param)),
+        vmc_left_(nullptr),
+        vmc_right_(nullptr),
         leglength_pid_left_(pid_leglength_left_param),
         leglength_pid_right_(pid_leglength_right_param),
         theta_pid_left_(pid_theta_left_param),
         theta_pid_right_(pid_theta_right_param),
         roll_pid_(pid_roll_param),
-        cmd_(&cmd),
-        referee_(&referee),
-        superpower_(&superpower) {
+        cmd_(cmd),
+        referee_(referee),
+        superpower_(superpower) {
+    ASSERT(cmd_ != nullptr);
+    ASSERT(referee_ != nullptr);
+    ASSERT(wheel_left != nullptr);
+    ASSERT(wheel_right != nullptr);
+
+    vmc_left_ = new LegVmc(hw, app, vmc_left_param);
+    vmc_right_ = new LegVmc(hw, app, vmc_right_param);
     this->hip_motor_.at(0) = new DMMotor(hw, app, hip_leftfront_param);
     this->hip_motor_.at(1) = new DMMotor(hw, app, hip_leftback_param);
     this->hip_motor_.at(2) = new DMMotor(hw, app, hip_rightfront_param);
@@ -314,6 +323,27 @@ class Wheelleg : public LibXR::Application {
     LibXR::Timer::Add(InitUi_);
     LibXR::Timer::Start(InitUi_);
   }
+
+  Wheelleg(LibXR::HardwareContainer& hw, LibXR::ApplicationManager& app,
+           CMD& cmd, Referee& referee, SuperPower& superpower,
+           uint32_t task_stack_depth, LegVmc::Param vmc_left_param,
+           LegVmc::Param vmc_right_param,
+           LibXR::PID<float>::Param pid_leglength_left_param,
+           LibXR::PID<float>::Param pid_leglength_right_param,
+           LibXR::PID<float>::Param pid_theta_left_param,
+           LibXR::PID<float>::Param pid_theta_right_param,
+           LibXR::PID<float>::Param pid_roll_param,
+           DMMotor::Param hip_leftfront_param,
+           DMMotor::Param hip_leftback_param,
+           DMMotor::Param hip_rightfront_param,
+           DMMotor::Param hip_rightback_param, RMMotor* wheel_left,
+           RMMotor* wheel_right, const WheellegParam& PARAM)
+      : Wheelleg(hw, app, &cmd, &referee, &superpower, task_stack_depth,
+                 vmc_left_param, vmc_right_param, pid_leglength_left_param,
+                 pid_leglength_right_param, pid_theta_left_param,
+                 pid_theta_right_param, pid_roll_param, hip_leftfront_param,
+                 hip_leftback_param, hip_rightfront_param,
+                 hip_rightback_param, wheel_left, wheel_right, PARAM) {}
 
   /**
    * @brief 线程函数
