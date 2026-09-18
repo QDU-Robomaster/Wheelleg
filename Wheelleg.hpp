@@ -100,55 +100,62 @@ class Wheelleg
     float K_Poly_Coefficient[40][6];                   /*K矩阵*/
   };
 
+  struct Param
+  {
+    uint32_t task_stack_depth;  ///< 任务堆栈深度
+    LegVmc::Param vmc_left_param;  ///< 左腿参数
+    LegVmc::Param vmc_right_param;  ///< 右腿参数
+    LibXR::PID<float>::Param pid_leglength_left_param;  ///< 左腿长pid参数
+    LibXR::PID<float>::Param pid_leglength_right_param;  ///< 右腿长pid参数
+    LibXR::PID<float>::Param pid_theta_left_param;  ///< 左腿摆角pid参数
+    LibXR::PID<float>::Param pid_theta_right_param;  ///< 右腿摆角pid参数
+    LibXR::PID<float>::Param pid_roll_param;  ///< roll轴pid参数
+    DMMotor::Param hip_leftfront_param;  ///< 左前关节电机参数
+    DMMotor::Param hip_leftback_param;  ///< 左后关节电机参数
+    DMMotor::Param hip_rightfront_param;  ///< 右前关节电机参数
+    DMMotor::Param hip_rightback_param;  ///< 右后关节电机参数
+    WheellegParam robot_param;
+  };
+
   /**
    * @brief wheelleg 类的构造函数
    *
    * @param CMD cmd传
-   * @param task_stack_depth 任务堆栈深度
-   * @param vmc_left_param 左腿参数
-   * @param vmc_right_param 右腿参数
-   * @param pid_leglength_left_param 左腿长pid参数
-   * @param pid_leglength_right_param 右腿长pid参数
-   * @param pid_theta_left_param 左腿摆角pid参数
-   * @param pid_theta_right_param 右腿摆角pid参数
-   * @param pid_roll_param roll轴pid参数
-   * @param hip_leftfront_param 左前关节电机参数
-   * @param hip_leftback_param 左后关节电机参数
-   * @param hip_rightfront_param 右前关节电机参数
-   * @param hip_rightback_param 右后关节电机参数
+   * @param param Value configuration.
    * @param wheel_left 指向左轮电机
    * @param wheel_right 指向右轮电机
    * @param WheellegParam 机体参数
    */
-  Wheelleg(CMD& cmd, Referee& referee, SuperPower& superpower, uint32_t task_stack_depth,
-           LegVmc::Param vmc_left_param, LegVmc::Param vmc_right_param,
-           LibXR::PID<float>::Param pid_leglength_left_param,
-           LibXR::PID<float>::Param pid_leglength_right_param,
-           LibXR::PID<float>::Param pid_theta_left_param,
-           LibXR::PID<float>::Param pid_theta_right_param,
-           LibXR::PID<float>::Param pid_roll_param, DMMotor::Param hip_leftfront_param,
-           DMMotor::Param hip_leftback_param, DMMotor::Param hip_rightfront_param,
-           DMMotor::Param hip_rightback_param, RMMotor* wheel_left, RMMotor* wheel_right,
-           const WheellegParam& PARAM)
-      : param_(PARAM),
-        vmc_left_(new LegVmc(vmc_left_param)),
-        vmc_right_(new LegVmc(vmc_right_param)),
-        leglength_pid_left_(pid_leglength_left_param),
-        leglength_pid_right_(pid_leglength_right_param),
-        theta_pid_left_(pid_theta_left_param),
-        theta_pid_right_(pid_theta_right_param),
-        roll_pid_(pid_roll_param),
+  Wheelleg(
+      CMD& cmd,
+      Referee& referee,
+      SuperPower& superpower,
+      LibXR::CAN& hip_leftfront_can,
+      LibXR::CAN& hip_leftback_can,
+      LibXR::CAN& hip_rightfront_can,
+      LibXR::CAN& hip_rightback_can,
+      RMMotor& wheel_left,
+      RMMotor& wheel_right,
+      const Param& param = {.task_stack_depth = 4096, .vmc_left_param = {.leg_4 = 0.21f, .leg_1 = 0.21f, .leg_3 = 0.25f, .leg_2 = 0.25f, .hip_length = 0.0f}, .vmc_right_param = {.leg_4 = 0.21f, .leg_1 = 0.21f, .leg_3 = 0.25f, .leg_2 = 0.25f, .hip_length = 0.0f}, .pid_leglength_left_param = {.k = 1.0f, .p = 900.0f, .i = 0.0f, .d = 50.0f, .i_limit = 50.0f, .out_limit = 300.0f, .cycle = false}, .pid_leglength_right_param = {.k = 1.0f, .p = 900.0f, .i = 0.0f, .d = 50.0f, .i_limit = 50.0f, .out_limit = 300.0f, .cycle = false}, .pid_theta_left_param = {.k = 1.0f, .p = 15.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 5.0f, .cycle = false}, .pid_theta_right_param = {.k = 1.0f, .p = 15.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 5.0f, .cycle = false}, .pid_roll_param = {.k = 1200.0f, .p = 1.0f, .i = 0.1f, .d = 0.6f, .i_limit = 0.0f, .out_limit = 100.0f, .cycle = true}, .hip_leftfront_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 1}, .hip_leftback_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 2}, .hip_rightfront_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 4}, .hip_rightback_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 3}, .robot_param = {.mech_zero = {0.0f, 0.0f, 0.0f, 0.0f}, .static_L0 = {0.15f, 0.15f}, .static_F0 = {115.0f, 115.0f}, .wheel_radius = 0.06f, .max_speed = 2.8f, .K_Poly_Coefficient = {{-2.4926f, -0.0085557f, -1.4237f, 3.7989f, -1.0144f, -0.45636f}, {-4.6042f, -0.102f, -2.2408f, 6.1744f, -2.2534f, -2.0711f}, {-2.8566f, -5.9061f, 2.4219f, 6.7974f, -2.3655f, -0.20335f}, {-0.64595f, -1.7651f, 0.94845f, 2.0205f, -0.64978f, -0.34658f}, {-5.448f, -43.896f, 10.787f, 41.689f, 12.233f, -10.496f}, {-0.64886f, -3.8569f, 0.6421f, -0.093447f, -0.9605f, -0.7316f}, {-3.9692f, 19.076f, -41.709f, -21.817f, 13.501f, 12.258f}, {-0.27776f, 0.8594f, -4.2875f, -0.6321f, 1.4201f, -3.2795f}, {-3.0172f, 8.7533f, 2.546f, -9.207f, -7.7938f, 1.7617f}, {-1.0966f, 3.277f, 0.85392f, -3.5286f, -2.8362f, 0.82452f}, {-2.4926f, -1.4237f, -0.0085557f, -0.45636f, -1.0144f, 3.7989f}, {-4.6042f, -2.2408f, -0.102f, -2.0711f, -2.2534f, 6.1744f}, {2.8566f, -2.4219f, 5.9061f, 0.20335f, 2.3655f, -6.7974f}, {0.64595f, -0.94845f, 1.7651f, 0.34658f, 0.64978f, -2.0205f}, {-3.9692f, -41.709f, 19.076f, 12.258f, 13.501f, -21.817f}, {-0.27776f, -4.2875f, 0.8594f, -3.2795f, 1.4201f, -0.6321f}, {-5.448f, 10.787f, -43.896f, -10.496f, 12.233f, 41.689f}, {-0.64886f, 0.6421f, -3.8569f, -0.7316f, -0.9605f, -0.093447f}, {-3.0172f, 2.546f, 8.7533f, 1.7617f, -7.7938f, -9.207f}, {-1.0966f, 0.85392f, 3.277f, 0.82452f, -2.8362f, -3.5286f}, {3.8207f, 13.933f, -28.338f, -33.981f, 15.526f, 37.126f}, {6.8208f, 24.75f, -50.247f, -59.267f, 27.54f, 65.109f}, {-6.4027f, 9.014f, 4.0619f, -9.9542f, 30.275f, -6.3869f}, {-1.5633f, 2.5677f, 0.87157f, -2.7875f, 7.9043f, -1.0069f}, {10.631f, 73.518f, -15.946f, -93.499f, 109.25f, 20.843f}, {1.8344f, 2.6874f, -3.3599f, 3.6775f, 0.81105f, 6.3348f}, {1.1533f, -15.818f, -62.482f, 11.797f, -89.649f, 54.039f}, {-0.39484f, 0.79831f, -1.0451f, -4.6228f, -0.42961f, -5.669f}, {-14.198f, -18.013f, 6.6946f, 18.333f, 5.8638f, -5.7598f}, {-5.6903f, -7.0214f, 2.9398f, 7.4797f, 1.9812f, -2.8077f}, {3.8207f, -28.338f, 13.933f, 37.126f, 15.526f, -33.981f}, {6.8208f, -50.247f, 24.75f, 65.109f, 27.54f, -59.267f}, {6.4027f, -4.0619f, -9.014f, 6.3869f, -30.275f, 9.9542f}, {1.5633f, -0.87157f, -2.5677f, 1.0069f, -7.9043f, 2.7875f}, {1.1533f, -62.482f, -15.818f, 54.039f, -89.649f, 11.797f}, {-0.39484f, -1.0451f, 0.79831f, -5.669f, -0.42961f, -4.6228f}, {10.631f, -15.946f, 73.518f, 20.843f, 109.25f, -93.499f}, {1.8344f, -3.3599f, 2.6874f, 6.3348f, 0.81105f, 3.6775f}, {-14.198f, 6.6946f, -18.013f, -5.7598f, 5.8638f, 18.333f}, {-5.6903f, 2.9398f, -7.0214f, -2.8077f, 1.9812f, 7.4797f}}}})
+      : param_(param.robot_param),
+        vmc_left_(new LegVmc(param.vmc_left_param)),
+        vmc_right_(new LegVmc(param.vmc_right_param)),
+        leglength_pid_left_(param.pid_leglength_left_param),
+        leglength_pid_right_(param.pid_leglength_right_param),
+        theta_pid_left_(param.pid_theta_left_param),
+        theta_pid_right_(param.pid_theta_right_param),
+        roll_pid_(param.pid_roll_param),
         cmd_(&cmd),
         referee_(&referee),
         superpower_(&superpower)
   {
-    this->hip_motor_.at(0) = new DMMotor(hip_leftfront_param);
-    this->hip_motor_.at(1) = new DMMotor(hip_leftback_param);
-    this->hip_motor_.at(2) = new DMMotor(hip_rightfront_param);
-    this->hip_motor_.at(3) = new DMMotor(hip_rightback_param);
+    this->hip_motor_.at(0) = new DMMotor(hip_leftfront_can, param.hip_leftfront_param);
+    this->hip_motor_.at(1) = new DMMotor(hip_leftback_can, param.hip_leftback_param);
+    this->hip_motor_.at(2) = new DMMotor(hip_rightfront_can, param.hip_rightfront_param);
+    this->hip_motor_.at(3) = new DMMotor(hip_rightback_can, param.hip_rightback_param);
 
-    this->wheel_motor_.at(0) = wheel_left;
-    this->wheel_motor_.at(1) = wheel_right;
+    this->wheel_motor_.at(0) = &wheel_left;
+    this->wheel_motor_.at(1) = &wheel_right;
 
     for (int i = 0; i < 4; i++)
     {
@@ -192,7 +199,7 @@ class Wheelleg
                             event_callback);
     event_handler_.Register(static_cast<uint32_t>(WheellegEvent::SET_MODE_JUMP),
                             event_callback);
-    thread_.Create(this, ThreadFunc, "WheellegThread", task_stack_depth,
+    thread_.Create(this, ThreadFunc, "WheellegThread", param.task_stack_depth,
                    LibXR::Thread::Priority::MEDIUM);
 
     void (*InitUi)(Wheelleg*) = [](Wheelleg* wheelleg) { wheelleg->InitUi(); };
