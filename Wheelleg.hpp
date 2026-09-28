@@ -1775,8 +1775,6 @@ class Wheelleg
     return 0;
   }
 
-  void OnMonitor() {}
-
   float AdaptFilter(float wz, float gyro_z, float speed, float accl, float dt_)
   {
     adaptfilter_argum_.xhatminus = adaptfilter_argum_.xhat + accl * dt_;
