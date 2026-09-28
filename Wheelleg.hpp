@@ -93,11 +93,11 @@ class Wheelleg
   struct WheellegParam
   {
     std::array<LibXR::CycleValue<float>, 4> mech_zero; /*关节电机偏置零点 单位rad*/
-    std::array<float, 2> static_L0;                    /*基本腿长 单位m*/
-    std::array<float, 2> static_F0;                    /*基本推力 单位N */
+    std::array<float, 2> static_l0;                    /*基本腿长 单位m*/
+    std::array<float, 2> static_f0;                    /*基本推力 单位N */
     float wheel_radius;                                /*轮子半径 单位m*/
     float max_speed;                                   /*最大速度 单位m/s*/
-    float K_Poly_Coefficient[40][6];                   /*K矩阵*/
+    float k_poly_coefficient[40][6];                   /*K矩阵*/
   };
 
   struct Param
@@ -136,7 +136,7 @@ class Wheelleg
       LibXR::CAN& hip_rightback_can,
       RMMotor& wheel_left,
       RMMotor& wheel_right,
-      const Param& param = {.task_stack_depth = 4096, .vmc_left_param = {.leg_4 = 0.21f, .leg_1 = 0.21f, .leg_3 = 0.25f, .leg_2 = 0.25f, .hip_length = 0.0f}, .vmc_right_param = {.leg_4 = 0.21f, .leg_1 = 0.21f, .leg_3 = 0.25f, .leg_2 = 0.25f, .hip_length = 0.0f}, .pid_leglength_left_param = {.k = 1.0f, .p = 900.0f, .i = 0.0f, .d = 50.0f, .i_limit = 50.0f, .out_limit = 300.0f, .cycle = false}, .pid_leglength_right_param = {.k = 1.0f, .p = 900.0f, .i = 0.0f, .d = 50.0f, .i_limit = 50.0f, .out_limit = 300.0f, .cycle = false}, .pid_theta_left_param = {.k = 1.0f, .p = 15.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 5.0f, .cycle = false}, .pid_theta_right_param = {.k = 1.0f, .p = 15.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 5.0f, .cycle = false}, .pid_roll_param = {.k = 1200.0f, .p = 1.0f, .i = 0.1f, .d = 0.6f, .i_limit = 0.0f, .out_limit = 100.0f, .cycle = true}, .hip_leftfront_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 1}, .hip_leftback_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 2}, .hip_rightfront_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 4}, .hip_rightback_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 3}, .robot_param = {.mech_zero = {0.0f, 0.0f, 0.0f, 0.0f}, .static_L0 = {0.15f, 0.15f}, .static_F0 = {115.0f, 115.0f}, .wheel_radius = 0.06f, .max_speed = 2.8f, .K_Poly_Coefficient = {{-2.4926f, -0.0085557f, -1.4237f, 3.7989f, -1.0144f, -0.45636f}, {-4.6042f, -0.102f, -2.2408f, 6.1744f, -2.2534f, -2.0711f}, {-2.8566f, -5.9061f, 2.4219f, 6.7974f, -2.3655f, -0.20335f}, {-0.64595f, -1.7651f, 0.94845f, 2.0205f, -0.64978f, -0.34658f}, {-5.448f, -43.896f, 10.787f, 41.689f, 12.233f, -10.496f}, {-0.64886f, -3.8569f, 0.6421f, -0.093447f, -0.9605f, -0.7316f}, {-3.9692f, 19.076f, -41.709f, -21.817f, 13.501f, 12.258f}, {-0.27776f, 0.8594f, -4.2875f, -0.6321f, 1.4201f, -3.2795f}, {-3.0172f, 8.7533f, 2.546f, -9.207f, -7.7938f, 1.7617f}, {-1.0966f, 3.277f, 0.85392f, -3.5286f, -2.8362f, 0.82452f}, {-2.4926f, -1.4237f, -0.0085557f, -0.45636f, -1.0144f, 3.7989f}, {-4.6042f, -2.2408f, -0.102f, -2.0711f, -2.2534f, 6.1744f}, {2.8566f, -2.4219f, 5.9061f, 0.20335f, 2.3655f, -6.7974f}, {0.64595f, -0.94845f, 1.7651f, 0.34658f, 0.64978f, -2.0205f}, {-3.9692f, -41.709f, 19.076f, 12.258f, 13.501f, -21.817f}, {-0.27776f, -4.2875f, 0.8594f, -3.2795f, 1.4201f, -0.6321f}, {-5.448f, 10.787f, -43.896f, -10.496f, 12.233f, 41.689f}, {-0.64886f, 0.6421f, -3.8569f, -0.7316f, -0.9605f, -0.093447f}, {-3.0172f, 2.546f, 8.7533f, 1.7617f, -7.7938f, -9.207f}, {-1.0966f, 0.85392f, 3.277f, 0.82452f, -2.8362f, -3.5286f}, {3.8207f, 13.933f, -28.338f, -33.981f, 15.526f, 37.126f}, {6.8208f, 24.75f, -50.247f, -59.267f, 27.54f, 65.109f}, {-6.4027f, 9.014f, 4.0619f, -9.9542f, 30.275f, -6.3869f}, {-1.5633f, 2.5677f, 0.87157f, -2.7875f, 7.9043f, -1.0069f}, {10.631f, 73.518f, -15.946f, -93.499f, 109.25f, 20.843f}, {1.8344f, 2.6874f, -3.3599f, 3.6775f, 0.81105f, 6.3348f}, {1.1533f, -15.818f, -62.482f, 11.797f, -89.649f, 54.039f}, {-0.39484f, 0.79831f, -1.0451f, -4.6228f, -0.42961f, -5.669f}, {-14.198f, -18.013f, 6.6946f, 18.333f, 5.8638f, -5.7598f}, {-5.6903f, -7.0214f, 2.9398f, 7.4797f, 1.9812f, -2.8077f}, {3.8207f, -28.338f, 13.933f, 37.126f, 15.526f, -33.981f}, {6.8208f, -50.247f, 24.75f, 65.109f, 27.54f, -59.267f}, {6.4027f, -4.0619f, -9.014f, 6.3869f, -30.275f, 9.9542f}, {1.5633f, -0.87157f, -2.5677f, 1.0069f, -7.9043f, 2.7875f}, {1.1533f, -62.482f, -15.818f, 54.039f, -89.649f, 11.797f}, {-0.39484f, -1.0451f, 0.79831f, -5.669f, -0.42961f, -4.6228f}, {10.631f, -15.946f, 73.518f, 20.843f, 109.25f, -93.499f}, {1.8344f, -3.3599f, 2.6874f, 6.3348f, 0.81105f, 3.6775f}, {-14.198f, 6.6946f, -18.013f, -5.7598f, 5.8638f, 18.333f}, {-5.6903f, 2.9398f, -7.0214f, -2.8077f, 1.9812f, 7.4797f}}}})
+      const Param& param = {.task_stack_depth = 4096, .vmc_left_param = {.leg_4 = 0.21f, .leg_1 = 0.21f, .leg_3 = 0.25f, .leg_2 = 0.25f, .hip_length = 0.0f}, .vmc_right_param = {.leg_4 = 0.21f, .leg_1 = 0.21f, .leg_3 = 0.25f, .leg_2 = 0.25f, .hip_length = 0.0f}, .pid_leglength_left_param = {.k = 1.0f, .p = 900.0f, .i = 0.0f, .d = 50.0f, .i_limit = 50.0f, .out_limit = 300.0f, .cycle = false}, .pid_leglength_right_param = {.k = 1.0f, .p = 900.0f, .i = 0.0f, .d = 50.0f, .i_limit = 50.0f, .out_limit = 300.0f, .cycle = false}, .pid_theta_left_param = {.k = 1.0f, .p = 15.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 5.0f, .cycle = false}, .pid_theta_right_param = {.k = 1.0f, .p = 15.0f, .i = 0.0f, .d = 0.0f, .i_limit = 0.0f, .out_limit = 5.0f, .cycle = false}, .pid_roll_param = {.k = 1200.0f, .p = 1.0f, .i = 0.1f, .d = 0.6f, .i_limit = 0.0f, .out_limit = 100.0f, .cycle = true}, .hip_leftfront_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 1}, .hip_leftback_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 2}, .hip_rightfront_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 4}, .hip_rightback_param = {.model = DMMotor::Model::MOTOR_DM8009, .reverse = true, .can_id = 3}, .robot_param = {.mech_zero = {0.0f, 0.0f, 0.0f, 0.0f}, .static_l0 = {0.15f, 0.15f}, .static_f0 = {115.0f, 115.0f}, .wheel_radius = 0.06f, .max_speed = 2.8f, .k_poly_coefficient = {{-2.4926f, -0.0085557f, -1.4237f, 3.7989f, -1.0144f, -0.45636f}, {-4.6042f, -0.102f, -2.2408f, 6.1744f, -2.2534f, -2.0711f}, {-2.8566f, -5.9061f, 2.4219f, 6.7974f, -2.3655f, -0.20335f}, {-0.64595f, -1.7651f, 0.94845f, 2.0205f, -0.64978f, -0.34658f}, {-5.448f, -43.896f, 10.787f, 41.689f, 12.233f, -10.496f}, {-0.64886f, -3.8569f, 0.6421f, -0.093447f, -0.9605f, -0.7316f}, {-3.9692f, 19.076f, -41.709f, -21.817f, 13.501f, 12.258f}, {-0.27776f, 0.8594f, -4.2875f, -0.6321f, 1.4201f, -3.2795f}, {-3.0172f, 8.7533f, 2.546f, -9.207f, -7.7938f, 1.7617f}, {-1.0966f, 3.277f, 0.85392f, -3.5286f, -2.8362f, 0.82452f}, {-2.4926f, -1.4237f, -0.0085557f, -0.45636f, -1.0144f, 3.7989f}, {-4.6042f, -2.2408f, -0.102f, -2.0711f, -2.2534f, 6.1744f}, {2.8566f, -2.4219f, 5.9061f, 0.20335f, 2.3655f, -6.7974f}, {0.64595f, -0.94845f, 1.7651f, 0.34658f, 0.64978f, -2.0205f}, {-3.9692f, -41.709f, 19.076f, 12.258f, 13.501f, -21.817f}, {-0.27776f, -4.2875f, 0.8594f, -3.2795f, 1.4201f, -0.6321f}, {-5.448f, 10.787f, -43.896f, -10.496f, 12.233f, 41.689f}, {-0.64886f, 0.6421f, -3.8569f, -0.7316f, -0.9605f, -0.093447f}, {-3.0172f, 2.546f, 8.7533f, 1.7617f, -7.7938f, -9.207f}, {-1.0966f, 0.85392f, 3.277f, 0.82452f, -2.8362f, -3.5286f}, {3.8207f, 13.933f, -28.338f, -33.981f, 15.526f, 37.126f}, {6.8208f, 24.75f, -50.247f, -59.267f, 27.54f, 65.109f}, {-6.4027f, 9.014f, 4.0619f, -9.9542f, 30.275f, -6.3869f}, {-1.5633f, 2.5677f, 0.87157f, -2.7875f, 7.9043f, -1.0069f}, {10.631f, 73.518f, -15.946f, -93.499f, 109.25f, 20.843f}, {1.8344f, 2.6874f, -3.3599f, 3.6775f, 0.81105f, 6.3348f}, {1.1533f, -15.818f, -62.482f, 11.797f, -89.649f, 54.039f}, {-0.39484f, 0.79831f, -1.0451f, -4.6228f, -0.42961f, -5.669f}, {-14.198f, -18.013f, 6.6946f, 18.333f, 5.8638f, -5.7598f}, {-5.6903f, -7.0214f, 2.9398f, 7.4797f, 1.9812f, -2.8077f}, {3.8207f, -28.338f, 13.933f, 37.126f, 15.526f, -33.981f}, {6.8208f, -50.247f, 24.75f, 65.109f, 27.54f, -59.267f}, {6.4027f, -4.0619f, -9.014f, 6.3869f, -30.275f, 9.9542f}, {1.5633f, -0.87157f, -2.5677f, 1.0069f, -7.9043f, 2.7875f}, {1.1533f, -62.482f, -15.818f, 54.039f, -89.649f, 11.797f}, {-0.39484f, -1.0451f, 0.79831f, -5.669f, -0.42961f, -4.6228f}, {10.631f, -15.946f, 73.518f, 20.843f, 109.25f, -93.499f}, {1.8344f, -3.3599f, 2.6874f, 6.3348f, 0.81105f, 3.6775f}, {-14.198f, 6.6946f, -18.013f, -5.7598f, 5.8638f, 18.333f}, {-5.6903f, 2.9398f, -7.0214f, -2.8077f, 1.9812f, 7.4797f}}}})
       : param_(param.robot_param),
         vmc_left_(new LegVmc(param.vmc_left_param)),
         vmc_right_(new LegVmc(param.vmc_right_param)),
@@ -289,7 +289,7 @@ class Wheelleg
     if (!wheel_online_now)
     {
       wheel_online_start_time_ = 0;
-      body_argum_.C620_ready_flag_ = false;
+      body_argum_.c620_ready_flag_ = false;
     }
     else
     {
@@ -297,7 +297,7 @@ class Wheelleg
       {
         wheel_online_start_time_ = now_;
       }
-      body_argum_.C620_ready_flag_ = (now_ - wheel_online_start_time_ >= 2500000ULL);
+      body_argum_.c620_ready_flag_ = (now_ - wheel_online_start_time_ >= 2500000ULL);
     }
 
     /* 虚拟腿角度计算 */
@@ -338,16 +338,16 @@ class Wheelleg
     auto result0 = vmc_left_->VMCsolve(
         -leg_argum_[0].phi1_, -leg_argum_[0].phi4_, -body_argum_.pit_, body_argum_.gyro_,
         -leg_argum_[0].omega1_, -leg_argum_[0].omega4_, dt_);
-    leg_argum_[0].L0 = std::get<0>(result0);
-    leg_argum_[0].d_L0 = std::get<1>(result0);
+    leg_argum_[0].l0 = std::get<0>(result0);
+    leg_argum_[0].d_l0 = std::get<1>(result0);
     leg_argum_[0].theta = RangeAnglePI(-std::get<2>(result0));
     leg_argum_[0].d_theta = -std::get<3>(result0);
 
     auto result1 = vmc_right_->VMCsolve(
         -leg_argum_[1].phi1_, -leg_argum_[1].phi4_, -body_argum_.pit_, body_argum_.gyro_,
         -leg_argum_[1].omega1_, -leg_argum_[1].omega4_, dt_);
-    leg_argum_[1].L0 = std::get<0>(result1);
-    leg_argum_[1].d_L0 = std::get<1>(result1);
+    leg_argum_[1].l0 = std::get<0>(result1);
+    leg_argum_[1].d_l0 = std::get<1>(result1);
     leg_argum_[1].theta = RangeAnglePI(-std::get<2>(result1));
     leg_argum_[1].d_theta = -std::get<3>(result1);
 
@@ -360,11 +360,11 @@ class Wheelleg
 
     /* 腿摆动导致速度的变化 */
     float leg_xdot_0 =
-        leg_argum_[0].L0 * leg_argum_[0].d_theta * cosf(leg_argum_[0].theta) +
-        leg_argum_[0].d_L0 * sinf(leg_argum_[0].theta);
+        leg_argum_[0].l0 * leg_argum_[0].d_theta * cosf(leg_argum_[0].theta) +
+        leg_argum_[0].d_l0 * sinf(leg_argum_[0].theta);
     float leg_xdot_1 =
-        leg_argum_[1].L0 * leg_argum_[1].d_theta * cosf(leg_argum_[1].theta) +
-        leg_argum_[1].d_L0 * sinf(leg_argum_[1].theta);
+        leg_argum_[1].l0 * leg_argum_[1].d_theta * cosf(leg_argum_[1].theta) +
+        leg_argum_[1].d_l0 * sinf(leg_argum_[1].theta);
     /*注意减速比 两者均向前+*/
     /*左侧轮速*/
     leg_argum_[0].single_x_dot =
@@ -430,7 +430,7 @@ class Wheelleg
      * 由交龙第一视角得出(根据自家超电)*/
 
     body_argum_.expspeed =
-        std::clamp(0.5f / (leg_argum_[0].L0 + leg_argum_[1].L0 + 0.2f) + 1.45f, 0.5f,
+        std::clamp(0.5f / (leg_argum_[0].l0 + leg_argum_[1].l0 + 0.2f) + 1.45f, 0.5f,
                    param_.max_speed);
 
     // 腿长线性前馈：F0 = 166*L0 + 95
@@ -459,33 +459,33 @@ class Wheelleg
       body_argum_.expspeed *= 1.15f;
     }
 
-    float L0_feedforward_left = 140.0f * leg_argum_[0].L0 + 112.0f;
-    float L0_feedforward_right = 140.0f * leg_argum_[1].L0 + 112.0f;
+    float L0_feedforward_left = 140.0f * leg_argum_[0].l0 + 112.0f;
+    float L0_feedforward_right = 140.0f * leg_argum_[1].l0 + 112.0f;
     /* 非线性控制率防止撞限位检测成离地 */
     if (!body_argum_.stair_ready_flag)
     {
       float max_leg_length = 0.34f;
       float leg_length_threshold = 0.1f;
-      if (fabsf(leg_argum_[0].L0 - max_leg_length) < 0.005f and
+      if (fabsf(leg_argum_[0].l0 - max_leg_length) < 0.005f and
           (current_mode_ == STAND or current_mode_ == ROTOR))
       {
         float damping_factor =
-            fabsf(max_leg_length - leg_argum_[0].L0) / leg_length_threshold;
+            fabsf(max_leg_length - leg_argum_[0].l0) / leg_length_threshold;
         L0_feedforward_left *= damping_factor * damping_factor;
       }
-      if (fabsf(leg_argum_[1].L0 - max_leg_length) < 0.005f and
+      if (fabsf(leg_argum_[1].l0 - max_leg_length) < 0.005f and
           (current_mode_ == STAND or current_mode_ == ROTOR))
       {
         float damping_factor =
-            fabsf(max_leg_length - leg_argum_[1].L0) / leg_length_threshold;
+            fabsf(max_leg_length - leg_argum_[1].l0) / leg_length_threshold;
         L0_feedforward_right *= damping_factor * damping_factor;
       }
     }
 
-    leg_argum_[0].Delta_F =
-        std::clamp(L0_feedforward_left, 0.0f, param_.static_F0[0] + 150.0f);
-    leg_argum_[1].Delta_F =
-        std::clamp(L0_feedforward_right, 0.0f, param_.static_F0[1] + 150.0f);
+    leg_argum_[0].delta_f =
+        std::clamp(L0_feedforward_left, 0.0f, param_.static_f0[0] + 150.0f);
+    leg_argum_[1].delta_f =
+        std::clamp(L0_feedforward_right, 0.0f, param_.static_f0[1] + 150.0f);
   }
 
   /**
@@ -582,17 +582,17 @@ class Wheelleg
     }
 
     /* 实际支持力计算 */
-    leg_argum_[0].Fn = vmc_left_->GndDetector(
+    leg_argum_[0].fn = vmc_left_->GndDetector(
         hip_motor_[0]->GetFeedback().torque, hip_motor_[1]->GetFeedback().torque,
         accl_.z * GRAVITY, leg_argum_[0].theta, leg_argum_[0].d_theta, this->dt_);
 
-    leg_argum_[1].Fn = vmc_right_->GndDetector(
+    leg_argum_[1].fn = vmc_right_->GndDetector(
         hip_motor_[3]->GetFeedback().torque, hip_motor_[2]->GetFeedback().torque,
         accl_.z * GRAVITY, leg_argum_[1].theta, leg_argum_[1].d_theta, this->dt_);
     leg_argum_[0].onground_flag_ = true;
     leg_argum_[1].onground_flag_ = true;
     /*离地检测处理*/
-    if (((leg_argum_[0].Fn < 40.0f) and (leg_argum_[1].Fn < 40.0f)))
+    if (((leg_argum_[0].fn < 40.0f) and (leg_argum_[1].fn < 40.0f)))
     {
       this->body_argum_.flytime_ += 1.0f;
       if (this->body_argum_.flytime_ > 4.0f)
@@ -624,51 +624,51 @@ class Wheelleg
       /* 处理k矩阵 */
       for (int i = 0; i < 40; i++)
       {
-        body_argum_.LQR_K[i] = vmc_left_->Lqr2KCalc(
-            &this->param_.K_Poly_Coefficient[i][0], leg_argum_[0].L0, leg_argum_[1].L0);
+        body_argum_.lqr_k[i] = vmc_left_->Lqr2KCalc(
+            &this->param_.k_poly_coefficient[i][0], leg_argum_[0].l0, leg_argum_[1].l0);
       }
       float s_limit_k = 1.0f;
-      float yaw_limit_k = 3.14f * 1.1f / ((leg_argum_[0].L0 + leg_argum_[1].L0) / 0.3f);
+      float yaw_limit_k = 3.14f * 1.1f / ((leg_argum_[0].l0 + leg_argum_[1].l0) / 0.3f);
 
       if (current_mode_ == ROTOR)
       {
-        body_argum_.LQR_K[2] = 0.0f;
-        body_argum_.LQR_K[12] = 0.0f;
-        body_argum_.LQR_K[22] = 0.0f;
-        body_argum_.LQR_K[32] = 0.0f;
+        body_argum_.lqr_k[2] = 0.0f;
+        body_argum_.lqr_k[12] = 0.0f;
+        body_argum_.lqr_k[22] = 0.0f;
+        body_argum_.lqr_k[32] = 0.0f;
         s_limit_k = 0.45f;
         yaw_limit_k = 3.14f * 1.3f;
       }
-      // body_argum_.LQR_K[0]= 0.0f;
-      // body_argum_.LQR_K[10]=0.0f;
-      // body_argum_.LQR_K[20]=0.0f;
-      // body_argum_.LQR_K[30]=0.0f;
+      // body_argum_.lqr_k[0]= 0.0f;
+      // body_argum_.lqr_k[10]=0.0f;
+      // body_argum_.lqr_k[20]=0.0f;
+      // body_argum_.lqr_k[30]=0.0f;
 
       /*交龙24青工会摩擦圆限制*/
       if (fabsf(body_argum_.x_dot_hat * gyro_.z) > 6.0f)
       {
         for (int i = 0; i < 4; i++)
         {
-          body_argum_.LQR_K[0 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
-                                          body_argum_.LQR_K[0 + i * 10];
-          body_argum_.LQR_K[1 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
-                                          body_argum_.LQR_K[1 + i * 10];
-          body_argum_.LQR_K[2 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
-                                          body_argum_.LQR_K[2 + i * 10];
-          body_argum_.LQR_K[3 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
-                                          body_argum_.LQR_K[3 + i * 10];
+          body_argum_.lqr_k[0 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
+                                          body_argum_.lqr_k[0 + i * 10];
+          body_argum_.lqr_k[1 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
+                                          body_argum_.lqr_k[1 + i * 10];
+          body_argum_.lqr_k[2 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
+                                          body_argum_.lqr_k[2 + i * 10];
+          body_argum_.lqr_k[3 + i * 10] = 6.0f / fabsf(body_argum_.x_dot_hat * gyro_.z) *
+                                          body_argum_.lqr_k[3 + i * 10];
         }
       }
 
       /* 处理平衡点 应该与腿长和弹舱剩余弹量做拟合 */
-      float leg_x = ((leg_argum_[0].L0 + leg_argum_[1].L0) / 2.0f);
-      body_argum_.sK_offset = 0.0f;
-      // body_argum_.thetaK_offset_ = 0.684f*powf(leg_x,2)-0.86f*leg_x+0.28f;
-      // body_argum_.thetaK_offset_ =
+      float leg_x = ((leg_argum_[0].l0 + leg_argum_[1].l0) / 2.0f);
+      body_argum_.s_k_offset = 0.0f;
+      // body_argum_.theta_k_offset_ = 0.684f*powf(leg_x,2)-0.86f*leg_x+0.28f;
+      // body_argum_.theta_k_offset_ =
       // -0.3476f*powf(leg_x,2)-0.0894f*leg_x+0.1476f;
-      body_argum_.thetaK_offset_ = -0.31476241584544784 * leg_x + 0.21558012163788323;
+      body_argum_.theta_k_offset_ = -0.31476241584544784 * leg_x + 0.21558012163788323;
       /*补偿偏心离心加速度对于pitch的力矩 w^2*r*M*lc 依据质心上下调整正负*/
-      body_argum_.pitK_offset_ =
+      body_argum_.pit_k_offset_ =
           -fabsf(gyro_.z) * fabsf(gyro_.z) * 0.004f * 13.f * 0.006f + 0.028f;
 
       /*超出输出时削减移动项*/
@@ -677,134 +677,144 @@ class Wheelleg
       {
         /*------------------------- 左轮 -----------------------*/
         /*位移输出*/
-        leg_argum_[0].Tw_s_lim =
-            std::clamp(body_argum_.LQR_K[0] * (-body_argum_.xhat + body_argum_.target_x +
-                                               body_argum_.sK_offset) +
-                           body_argum_.LQR_K[1] *
+        leg_argum_[0].tw_s_lim =
+            std::clamp(body_argum_.lqr_k[0] * (-body_argum_.xhat + body_argum_.target_x +
+                                               body_argum_.s_k_offset) +
+                           body_argum_.lqr_k[1] *
                                (-body_argum_.x_dot_hat + body_argum_.target_dot_x),
-                       -fabsf(body_argum_.LQR_K[1] * param_.max_speed * s_limit_k),
-                       fabsf(body_argum_.LQR_K[1] * param_.max_speed * s_limit_k));
+                       -fabsf(body_argum_.lqr_k[1] * param_.max_speed * s_limit_k),
+                       fabsf(body_argum_.lqr_k[1] * param_.max_speed * s_limit_k));
         /*yaw输出*/
-        leg_argum_[0].Tw_yaw_lim = std::clamp(
-            (body_argum_.LQR_K[2] * (body_argum_.yaw_ + body_argum_.target_yaw) +
-             body_argum_.LQR_K[3] * (-gyro_.z + body_argum_.target_yaw_dot)),
-            -fabsf(body_argum_.LQR_K[3]) * yaw_limit_k,
-            fabsf(body_argum_.LQR_K[3]) * yaw_limit_k);
+        leg_argum_[0].tw_yaw_lim = std::clamp(
+            (body_argum_.lqr_k[2] * (body_argum_.yaw_ + body_argum_.target_yaw) +
+             body_argum_.lqr_k[3] * (-gyro_.z + body_argum_.target_yaw_dot)),
+            -fabsf(body_argum_.lqr_k[3]) * yaw_limit_k,
+            fabsf(body_argum_.lqr_k[3]) * yaw_limit_k);
         /*lqr总输出*/
-        leg_argum_[0].Tw =
-            (leg_argum_[0].Tw_s_lim + leg_argum_[0].Tw_yaw_lim +
-             body_argum_.LQR_K[4] * (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[5] * (-leg_argum_[0].d_theta + 0.0f) +
-             body_argum_.LQR_K[6] * (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[7] * (-leg_argum_[1].d_theta + 0.0f) +
-             body_argum_.LQR_K[8] * (-body_argum_.pit_ + body_argum_.pitK_offset_) +
-             body_argum_.LQR_K[9] * (-body_argum_.gyro_ + 0.0f));
+        leg_argum_[0].tw =
+            (leg_argum_[0].tw_s_lim + leg_argum_[0].tw_yaw_lim +
+             body_argum_.lqr_k[4] * (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[5] * (-leg_argum_[0].d_theta + 0.0f) +
+             body_argum_.lqr_k[6] * (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[7] * (-leg_argum_[1].d_theta + 0.0f) +
+             body_argum_.lqr_k[8] * (-body_argum_.pit_ + body_argum_.pit_k_offset_) +
+             body_argum_.lqr_k[9] * (-body_argum_.gyro_ + 0.0f));
         /*防打滑力矩*/
-        leg_argum_[0].Tw_adapt = 0.2f *
+        leg_argum_[0].tw_adapt = 0.2f *
                                  (leg_argum_[0].x_dot_pred - leg_argum_[0].single_x_dot) /
                                  param_.wheel_radius;
 
         /*------------------------- 左腿 -----------------------*/
         /*位移输出*/
-        leg_argum_[0].Tp_s_lim =
-            std::clamp(body_argum_.LQR_K[20] * (-body_argum_.xhat + body_argum_.target_x +
-                                                body_argum_.sK_offset) +
-                           body_argum_.LQR_K[21] *
+        leg_argum_[0].tp_s_lim =
+            std::clamp(body_argum_.lqr_k[20] * (-body_argum_.xhat + body_argum_.target_x +
+                                                body_argum_.s_k_offset) +
+                           body_argum_.lqr_k[21] *
                                (-body_argum_.x_dot_hat + body_argum_.target_dot_x),
-                       -fabsf(body_argum_.LQR_K[21] * param_.max_speed * s_limit_k),
-                       fabsf(body_argum_.LQR_K[21] * param_.max_speed * s_limit_k));
+                       -fabsf(body_argum_.lqr_k[21] * param_.max_speed * s_limit_k),
+                       fabsf(body_argum_.lqr_k[21] * param_.max_speed * s_limit_k));
         /*yaw输出*/
-        leg_argum_[0].Tp_yaw_lim = std::clamp(
-            (body_argum_.LQR_K[22] * (body_argum_.yaw_ + body_argum_.target_yaw) +
-             body_argum_.LQR_K[23] * (-gyro_.z + body_argum_.target_yaw_dot)),
-            -fabsf(body_argum_.LQR_K[23]) * yaw_limit_k,
-            fabsf(body_argum_.LQR_K[23]) * yaw_limit_k);
+        leg_argum_[0].tp_yaw_lim = std::clamp(
+            (body_argum_.lqr_k[22] * (body_argum_.yaw_ + body_argum_.target_yaw) +
+             body_argum_.lqr_k[23] * (-gyro_.z + body_argum_.target_yaw_dot)),
+            -fabsf(body_argum_.lqr_k[23]) * yaw_limit_k,
+            fabsf(body_argum_.lqr_k[23]) * yaw_limit_k);
         /*lqr总输出*/
-        leg_argum_[0].Tp =
-            (leg_argum_[0].Tp_s_lim + leg_argum_[0].Tp_yaw_lim +
-             body_argum_.LQR_K[24] * (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[25] * (-leg_argum_[0].d_theta + 0.0f) +
-             body_argum_.LQR_K[26] * (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[27] * (-leg_argum_[1].d_theta + 0.0f) +
-             body_argum_.LQR_K[28] * (-body_argum_.pit_ + body_argum_.pitK_offset_) +
-             body_argum_.LQR_K[29] * (-body_argum_.gyro_ + 0.0f));
+        leg_argum_[0].tp =
+            (leg_argum_[0].tp_s_lim + leg_argum_[0].tp_yaw_lim +
+             body_argum_.lqr_k[24] *
+                 (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[25] * (-leg_argum_[0].d_theta + 0.0f) +
+             body_argum_.lqr_k[26] *
+                 (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[27] * (-leg_argum_[1].d_theta + 0.0f) +
+             body_argum_.lqr_k[28] * (-body_argum_.pit_ + body_argum_.pit_k_offset_) +
+             body_argum_.lqr_k[29] * (-body_argum_.gyro_ + 0.0f));
       }
       else
       {
-        leg_argum_[0].Tw = 0.0f;
-        leg_argum_[0].Tw_adapt = 0;
-        leg_argum_[0].Tp =
-            (body_argum_.LQR_K[24] * (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[25] * (-leg_argum_[0].d_theta + 0.0f) +
-             body_argum_.LQR_K[26] * (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[27] * (-leg_argum_[1].d_theta + 0.0f));
+        leg_argum_[0].tw = 0.0f;
+        leg_argum_[0].tw_adapt = 0;
+        leg_argum_[0].tp =
+            (body_argum_.lqr_k[24] *
+                 (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[25] * (-leg_argum_[0].d_theta + 0.0f) +
+             body_argum_.lqr_k[26] *
+                 (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[27] * (-leg_argum_[1].d_theta + 0.0f));
       }
 
       if (leg_argum_[1].onground_flag_)
       {
         /*------------------------- 右轮 -----------------------*/
         /*位移输出*/
-        leg_argum_[1].Tw_s_lim =
-            std::clamp(body_argum_.LQR_K[10] * (-body_argum_.xhat + body_argum_.target_x +
-                                                body_argum_.sK_offset) +
-                           body_argum_.LQR_K[11] *
+        leg_argum_[1].tw_s_lim =
+            std::clamp(body_argum_.lqr_k[10] * (-body_argum_.xhat + body_argum_.target_x +
+                                                body_argum_.s_k_offset) +
+                           body_argum_.lqr_k[11] *
                                (-body_argum_.x_dot_hat + body_argum_.target_dot_x),
-                       -fabsf(body_argum_.LQR_K[11] * param_.max_speed * s_limit_k),
-                       fabsf(body_argum_.LQR_K[11] * param_.max_speed * s_limit_k));
+                       -fabsf(body_argum_.lqr_k[11] * param_.max_speed * s_limit_k),
+                       fabsf(body_argum_.lqr_k[11] * param_.max_speed * s_limit_k));
         /*yaw输出*/
-        leg_argum_[1].Tw_yaw_lim = std::clamp(
-            (body_argum_.LQR_K[12] * (body_argum_.yaw_ + body_argum_.target_yaw) +
-             body_argum_.LQR_K[13] * (-gyro_.z + body_argum_.target_yaw_dot)),
-            -fabsf(body_argum_.LQR_K[13]) * yaw_limit_k,
-            fabsf(body_argum_.LQR_K[13]) * yaw_limit_k);
+        leg_argum_[1].tw_yaw_lim = std::clamp(
+            (body_argum_.lqr_k[12] * (body_argum_.yaw_ + body_argum_.target_yaw) +
+             body_argum_.lqr_k[13] * (-gyro_.z + body_argum_.target_yaw_dot)),
+            -fabsf(body_argum_.lqr_k[13]) * yaw_limit_k,
+            fabsf(body_argum_.lqr_k[13]) * yaw_limit_k);
         /*lqr总输出*/
-        leg_argum_[1].Tw =
-            (leg_argum_[1].Tw_s_lim + leg_argum_[1].Tw_yaw_lim +
-             body_argum_.LQR_K[14] * (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[15] * (-leg_argum_[0].d_theta + 0.0f) +
-             body_argum_.LQR_K[16] * (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[17] * (-leg_argum_[1].d_theta + 0.0f) +
-             body_argum_.LQR_K[18] * (-body_argum_.pit_ + body_argum_.pitK_offset_) +
-             body_argum_.LQR_K[19] * (-body_argum_.gyro_ + 0.0f));
+        leg_argum_[1].tw =
+            (leg_argum_[1].tw_s_lim + leg_argum_[1].tw_yaw_lim +
+             body_argum_.lqr_k[14] *
+                 (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[15] * (-leg_argum_[0].d_theta + 0.0f) +
+             body_argum_.lqr_k[16] *
+                 (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[17] * (-leg_argum_[1].d_theta + 0.0f) +
+             body_argum_.lqr_k[18] * (-body_argum_.pit_ + body_argum_.pit_k_offset_) +
+             body_argum_.lqr_k[19] * (-body_argum_.gyro_ + 0.0f));
         /*防打滑力矩*/
-        leg_argum_[1].Tw_adapt = 0.2f *
+        leg_argum_[1].tw_adapt = 0.2f *
                                  (leg_argum_[1].x_dot_pred - leg_argum_[1].single_x_dot) /
                                  param_.wheel_radius;
 
         /*------------------------- 右腿 -----------------------*/
         /*位移输出*/
-        leg_argum_[1].Tp_s_lim =
-            std::clamp(body_argum_.LQR_K[30] * (-body_argum_.xhat + body_argum_.target_x +
-                                                body_argum_.sK_offset) +
-                           body_argum_.LQR_K[31] *
+        leg_argum_[1].tp_s_lim =
+            std::clamp(body_argum_.lqr_k[30] * (-body_argum_.xhat + body_argum_.target_x +
+                                                body_argum_.s_k_offset) +
+                           body_argum_.lqr_k[31] *
                                (-body_argum_.x_dot_hat + body_argum_.target_dot_x),
-                       -fabsf(body_argum_.LQR_K[31] * param_.max_speed * s_limit_k),
-                       fabsf(body_argum_.LQR_K[31] * param_.max_speed * s_limit_k));
+                       -fabsf(body_argum_.lqr_k[31] * param_.max_speed * s_limit_k),
+                       fabsf(body_argum_.lqr_k[31] * param_.max_speed * s_limit_k));
         /*yaw输出*/
-        leg_argum_[1].Tp_yaw_lim = std::clamp(
-            (body_argum_.LQR_K[32] * (body_argum_.yaw_ + body_argum_.target_yaw) +
-             body_argum_.LQR_K[33] * (-gyro_.z + body_argum_.target_yaw_dot)),
-            -fabsf(body_argum_.LQR_K[33]) * yaw_limit_k,
-            fabsf(body_argum_.LQR_K[33]) * yaw_limit_k);
+        leg_argum_[1].tp_yaw_lim = std::clamp(
+            (body_argum_.lqr_k[32] * (body_argum_.yaw_ + body_argum_.target_yaw) +
+             body_argum_.lqr_k[33] * (-gyro_.z + body_argum_.target_yaw_dot)),
+            -fabsf(body_argum_.lqr_k[33]) * yaw_limit_k,
+            fabsf(body_argum_.lqr_k[33]) * yaw_limit_k);
         /*lqr总输出*/
-        leg_argum_[1].Tp =
-            (leg_argum_[1].Tp_s_lim + leg_argum_[1].Tp_yaw_lim +
-             body_argum_.LQR_K[34] * (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[35] * (-leg_argum_[0].d_theta + 0.0f) +
-             body_argum_.LQR_K[36] * (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[37] * (-leg_argum_[1].d_theta + 0.0f) +
-             body_argum_.LQR_K[38] * (-body_argum_.pit_ + body_argum_.pitK_offset_) +
-             body_argum_.LQR_K[39] * (-body_argum_.gyro_ + 0.0f));
+        leg_argum_[1].tp =
+            (leg_argum_[1].tp_s_lim + leg_argum_[1].tp_yaw_lim +
+             body_argum_.lqr_k[34] *
+                 (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[35] * (-leg_argum_[0].d_theta + 0.0f) +
+             body_argum_.lqr_k[36] *
+                 (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[37] * (-leg_argum_[1].d_theta + 0.0f) +
+             body_argum_.lqr_k[38] * (-body_argum_.pit_ + body_argum_.pit_k_offset_) +
+             body_argum_.lqr_k[39] * (-body_argum_.gyro_ + 0.0f));
       }
       else
       {
-        leg_argum_[1].Tw = 0.0f;
-        leg_argum_[1].Tw_adapt = 0.0f;
-        leg_argum_[1].Tp =
-            (body_argum_.LQR_K[34] * (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[35] * (-leg_argum_[0].d_theta + 0.0f) +
-             body_argum_.LQR_K[36] * (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-             body_argum_.LQR_K[37] * (-leg_argum_[1].d_theta + 0.0f));
+        leg_argum_[1].tw = 0.0f;
+        leg_argum_[1].tw_adapt = 0.0f;
+        leg_argum_[1].tp =
+            (body_argum_.lqr_k[34] *
+                 (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[35] * (-leg_argum_[0].d_theta + 0.0f) +
+             body_argum_.lqr_k[36] *
+                 (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+             body_argum_.lqr_k[37] * (-leg_argum_[1].d_theta + 0.0f));
       }
 
       /* 腿长控制逻辑 */
@@ -846,19 +856,19 @@ class Wheelleg
         SetMode(STAIR);
       }
 
-      leg_argum_[0].Delta_L0 =
-          RampTowards(leg_argum_[0].Delta_L0, leg_argum_[0].target_delta_l0, 0.01f);
-      leg_argum_[1].Delta_L0 =
-          RampTowards(leg_argum_[1].Delta_L0, leg_argum_[1].target_delta_l0, 0.01f);
+      leg_argum_[0].delta_l0 =
+          RampTowards(leg_argum_[0].delta_l0, leg_argum_[0].target_delta_l0, 0.01f);
+      leg_argum_[1].delta_l0 =
+          RampTowards(leg_argum_[1].delta_l0, leg_argum_[1].target_delta_l0, 0.01f);
 
       // if (body_argum_.yaw_switch_flag and chassis_cmd_.self_define ==
-      // CMD::ChasStat::BOOST) { leg_argum_[0].Delta_L0 = -0.03f;
-      // leg_argum_[1].Delta_L0 = -0.03f;
+      // CMD::ChasStat::BOOST) { leg_argum_[0].delta_l0 = -0.03f;
+      // leg_argum_[1].delta_l0 = -0.03f;
       // }
-      leg_argum_[0].Delta_L0 =
-          std::clamp(leg_argum_[0].Delta_L0, -0.06f, 0.4f - param_.static_L0[0]);
-      leg_argum_[1].Delta_L0 =
-          std::clamp(leg_argum_[1].Delta_L0, -0.06f, 0.4f - param_.static_L0[1]);
+      leg_argum_[0].delta_l0 =
+          std::clamp(leg_argum_[0].delta_l0, -0.06f, 0.4f - param_.static_l0[0]);
+      leg_argum_[1].delta_l0 =
+          std::clamp(leg_argum_[1].delta_l0, -0.06f, 0.4f - param_.static_l0[1]);
 
       /* 侧向惯性力矩补偿=
        * (机体质量*0.5+腿质心高度系数*腿长*腿重)*前进平移速度*旋转角速度*腿长/两轮距离,
@@ -867,29 +877,29 @@ class Wheelleg
        * roll推力(交龙使用单环直接出力)+机体加腿静态重力+侧向惯性力矩补偿+pid控制默认腿长
        */
 
-      leglength_pid_left_.SetOutLimit(param_.static_F0[0] + 100);
-      leglength_pid_right_.SetOutLimit(param_.static_F0[1] + 100);
+      leglength_pid_left_.SetOutLimit(param_.static_f0[0] + 100);
+      leglength_pid_right_.SetOutLimit(param_.static_f0[1] + 100);
 
       body_argum_.roll_out = roll_pid_.Calculate(0.0f, eulr_.rol, gyro_.y, dt_);
 
-      leg_argum_[0].F0 =
-          leg_argum_[0].Delta_F +
-          leglength_pid_left_.Calculate(leg_argum_[0].Delta_L0 + param_.static_L0[0],
-                                        leg_argum_[0].L0, leg_argum_[0].d_L0, dt_) -
-          gyro_.z * body_argum_.x_dot_hat * (leg_argum_[0].L0) / 0.23f *
-              (26.0f + 0.6f * 1.3f * (leg_argum_[0].L0 + param_.wheel_radius)) +
+      leg_argum_[0].f0 =
+          leg_argum_[0].delta_f +
+          leglength_pid_left_.Calculate(leg_argum_[0].delta_l0 + param_.static_l0[0],
+                                        leg_argum_[0].l0, leg_argum_[0].d_l0, dt_) -
+          gyro_.z * body_argum_.x_dot_hat * (leg_argum_[0].l0) / 0.23f *
+              (26.0f + 0.6f * 1.3f * (leg_argum_[0].l0 + param_.wheel_radius)) +
           body_argum_.roll_out;
 
-      leg_argum_[1].F0 =
-          leg_argum_[1].Delta_F +
-          leglength_pid_right_.Calculate(leg_argum_[1].Delta_L0 + param_.static_L0[1],
-                                         leg_argum_[1].L0, leg_argum_[1].d_L0, dt_) +
-          gyro_.z * body_argum_.x_dot_hat * (leg_argum_[1].L0) / 0.23f *
-              (26.0f + 0.6f * 1.3f * (leg_argum_[1].L0 + param_.wheel_radius)) -
+      leg_argum_[1].f0 =
+          leg_argum_[1].delta_f +
+          leglength_pid_right_.Calculate(leg_argum_[1].delta_l0 + param_.static_l0[1],
+                                         leg_argum_[1].l0, leg_argum_[1].d_l0, dt_) +
+          gyro_.z * body_argum_.x_dot_hat * (leg_argum_[1].l0) / 0.23f *
+              (26.0f + 0.6f * 1.3f * (leg_argum_[1].l0 + param_.wheel_radius)) -
           body_argum_.roll_out;
 
-      leg_argum_[0].F0 = std::clamp(leg_argum_[0].F0, -200.0f, 270.0f);
-      leg_argum_[1].F0 = std::clamp(leg_argum_[1].F0, -200.0f, 270.0f);
+      leg_argum_[0].f0 = std::clamp(leg_argum_[0].f0, -200.0f, 270.0f);
+      leg_argum_[1].f0 = std::clamp(leg_argum_[1].f0, -200.0f, 270.0f);
 
       /*跳跃的支持力有别于其他模式的支持力*/
       if (current_mode_ == JUMP)
@@ -898,107 +908,107 @@ class Wheelleg
         {
           dmmotor_cmd_[i].kd = 0.2f;
         }
-        leglength_pid_left_.SetOutLimit(param_.static_F0[0] + 100);
-        leglength_pid_right_.SetOutLimit(param_.static_F0[1] + 100);
+        leglength_pid_left_.SetOutLimit(param_.static_f0[0] + 100);
+        leglength_pid_right_.SetOutLimit(param_.static_f0[1] + 100);
         body_argum_.jump_time = now_ - body_argum_.jump_start_time;
         if (body_argum_.jump_time < 150000) /*跳跃预备 收腿*/
         {
-          leg_argum_[0].F0 = leg_argum_[0].Delta_F +
-                             leglength_pid_left_.Calculate(0.12f, leg_argum_[0].L0,
-                                                           leg_argum_[0].d_L0, dt_) -
-                             gyro_.z * body_argum_.x_dot_hat * (leg_argum_[0].L0) /
-                                 0.23f * (8.0f + 0.5f * 0.7f * leg_argum_[0].L0) +
+          leg_argum_[0].f0 = leg_argum_[0].delta_f +
+                             leglength_pid_left_.Calculate(0.12f, leg_argum_[0].l0,
+                                                           leg_argum_[0].d_l0, dt_) -
+                             gyro_.z * body_argum_.x_dot_hat * (leg_argum_[0].l0) /
+                                 0.23f * (8.0f + 0.5f * 0.7f * leg_argum_[0].l0) +
                              body_argum_.roll_out;
 
-          leg_argum_[1].F0 = leg_argum_[1].Delta_F +
-                             leglength_pid_right_.Calculate(0.12f, leg_argum_[1].L0,
-                                                            leg_argum_[1].d_L0, dt_) +
-                             gyro_.z * body_argum_.x_dot_hat * (leg_argum_[1].L0) /
-                                 0.23f * (8.0f + 0.5f * 0.7f * leg_argum_[1].L0) -
+          leg_argum_[1].f0 = leg_argum_[1].delta_f +
+                             leglength_pid_right_.Calculate(0.12f, leg_argum_[1].l0,
+                                                            leg_argum_[1].d_l0, dt_) +
+                             gyro_.z * body_argum_.x_dot_hat * (leg_argum_[1].l0) /
+                                 0.23f * (8.0f + 0.5f * 0.7f * leg_argum_[1].l0) -
                              body_argum_.roll_out;
         }
         else if (body_argum_.jump_time < 370000)
         /*起跳*/
         {
-          leg_argum_[0].F0 = vmc_left_->MaxFnSolve(26) + leg_argum_[0].spring_force;
-          leg_argum_[1].F0 = vmc_right_->MaxFnSolve(26) + leg_argum_[1].spring_force;
+          leg_argum_[0].f0 = vmc_left_->MaxFnSolve(26) + leg_argum_[0].spring_force;
+          leg_argum_[1].f0 = vmc_right_->MaxFnSolve(26) + leg_argum_[1].spring_force;
         }
         else if (body_argum_.jump_time < 520000)
         /*起跳收腿 增加离地高度*/
         {
-          if (leg_argum_[0].L0 < 0.14)
+          if (leg_argum_[0].l0 < 0.14)
           {
-            leg_argum_[0].F0 = vmc_left_->MaxFnSolve(-7) + leg_argum_[0].spring_force;
+            leg_argum_[0].f0 = vmc_left_->MaxFnSolve(-7) + leg_argum_[0].spring_force;
           }
           else
           {
-            leg_argum_[0].F0 = vmc_left_->MaxFnSolve(-24) + leg_argum_[0].spring_force;
+            leg_argum_[0].f0 = vmc_left_->MaxFnSolve(-24) + leg_argum_[0].spring_force;
           }
 
-          if (leg_argum_[1].L0 < 0.14)
+          if (leg_argum_[1].l0 < 0.14)
           {
-            leg_argum_[1].F0 = vmc_right_->MaxFnSolve(-7) + leg_argum_[1].spring_force;
+            leg_argum_[1].f0 = vmc_right_->MaxFnSolve(-7) + leg_argum_[1].spring_force;
           }
           else
           {
-            leg_argum_[1].F0 = vmc_right_->MaxFnSolve(-24) + leg_argum_[1].spring_force;
+            leg_argum_[1].f0 = vmc_right_->MaxFnSolve(-24) + leg_argum_[1].spring_force;
           }
 
           // }else if(body_argum_.jump_time < 1000000){
-          //   leg_argum_[0].F0 = vmc_left_->MaxFnSolve(8) +
+          //   leg_argum_[0].f0 = vmc_left_->MaxFnSolve(8) +
           //   leg_argum_[0].spring_force;
-          // leg_argum_[1].F0 = vmc_right_->MaxFnSolve(8) +
+          // leg_argum_[1].f0 = vmc_right_->MaxFnSolve(8) +
           // leg_argum_[1].spring_force;
 
-          //   if (body_argum_.jump_time>80000 and( leg_argum_[0].L0<0.16f or
-          //   leg_argum_[1].L0<0.16f) )
+          //   if (body_argum_.jump_time>80000 and( leg_argum_[0].l0<0.16f or
+          //   leg_argum_[1].l0<0.16f) )
           // {  body_argum_.jump_time =0;
           //    SetMode(STAND);}
         }
         else if (body_argum_.jump_time < 750000)
         {
-          leg_argum_[0].Tp =
-              2.0f * (body_argum_.LQR_K[24] *
-                          (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-                      body_argum_.LQR_K[25] * (-leg_argum_[0].d_theta + 0.0f) +
-                      body_argum_.LQR_K[26] *
-                          (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-                      body_argum_.LQR_K[27] * (-leg_argum_[1].d_theta + 0.0f) +
-                      body_argum_.LQR_K[28] * (-body_argum_.pit_));
+          leg_argum_[0].tp =
+              2.0f * (body_argum_.lqr_k[24] *
+                          (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+                      body_argum_.lqr_k[25] * (-leg_argum_[0].d_theta + 0.0f) +
+                      body_argum_.lqr_k[26] *
+                          (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+                      body_argum_.lqr_k[27] * (-leg_argum_[1].d_theta + 0.0f) +
+                      body_argum_.lqr_k[28] * (-body_argum_.pit_));
 
-          leg_argum_[1].Tp =
-              2.0f * (body_argum_.LQR_K[34] *
-                          (-leg_argum_[0].theta + body_argum_.thetaK_offset_) +
-                      body_argum_.LQR_K[35] * (-leg_argum_[0].d_theta + 0.0f) +
-                      body_argum_.LQR_K[36] *
-                          (-leg_argum_[1].theta + body_argum_.thetaK_offset_) +
-                      body_argum_.LQR_K[37] * (-leg_argum_[1].d_theta + 0.0f) +
-                      body_argum_.LQR_K[38] * (-body_argum_.pit_));
+          leg_argum_[1].tp =
+              2.0f * (body_argum_.lqr_k[34] *
+                          (-leg_argum_[0].theta + body_argum_.theta_k_offset_) +
+                      body_argum_.lqr_k[35] * (-leg_argum_[0].d_theta + 0.0f) +
+                      body_argum_.lqr_k[36] *
+                          (-leg_argum_[1].theta + body_argum_.theta_k_offset_) +
+                      body_argum_.lqr_k[37] * (-leg_argum_[1].d_theta + 0.0f) +
+                      body_argum_.lqr_k[38] * (-body_argum_.pit_));
 
-          leg_argum_[0].Tw =
-              std::clamp(body_argum_.LQR_K[1] *
+          leg_argum_[0].tw =
+              std::clamp(body_argum_.lqr_k[1] *
                              (-body_argum_.x_dot_hat + body_argum_.target_dot_x),
-                         -fabsf(body_argum_.LQR_K[1] * param_.max_speed * s_limit_k),
-                         fabsf(body_argum_.LQR_K[1] * param_.max_speed * s_limit_k)) +
-              body_argum_.LQR_K[4] * (-leg_argum_[0].theta + 0.0f) +
-              body_argum_.LQR_K[5] * (-leg_argum_[0].d_theta + 0.0f) +
-              body_argum_.LQR_K[6] * (-leg_argum_[1].theta + 0.0f) +
-              body_argum_.LQR_K[7] * (-leg_argum_[1].d_theta + 0.0f);
+                         -fabsf(body_argum_.lqr_k[1] * param_.max_speed * s_limit_k),
+                         fabsf(body_argum_.lqr_k[1] * param_.max_speed * s_limit_k)) +
+              body_argum_.lqr_k[4] * (-leg_argum_[0].theta + 0.0f) +
+              body_argum_.lqr_k[5] * (-leg_argum_[0].d_theta + 0.0f) +
+              body_argum_.lqr_k[6] * (-leg_argum_[1].theta + 0.0f) +
+              body_argum_.lqr_k[7] * (-leg_argum_[1].d_theta + 0.0f);
 
-          leg_argum_[1].Tw =
-              std::clamp(body_argum_.LQR_K[11] *
+          leg_argum_[1].tw =
+              std::clamp(body_argum_.lqr_k[11] *
                              (-body_argum_.x_dot_hat + body_argum_.target_dot_x),
-                         -fabsf(body_argum_.LQR_K[11] * param_.max_speed * s_limit_k),
-                         fabsf(body_argum_.LQR_K[11] * param_.max_speed * s_limit_k)) +
-              body_argum_.LQR_K[14] * (-leg_argum_[0].theta + 0.0f) +
-              body_argum_.LQR_K[15] * (-leg_argum_[0].d_theta + 0.0f) +
-              body_argum_.LQR_K[16] * (-leg_argum_[1].theta + 0.0f) +
-              body_argum_.LQR_K[17] * (-leg_argum_[1].d_theta + 0.0f);
+                         -fabsf(body_argum_.lqr_k[11] * param_.max_speed * s_limit_k),
+                         fabsf(body_argum_.lqr_k[11] * param_.max_speed * s_limit_k)) +
+              body_argum_.lqr_k[14] * (-leg_argum_[0].theta + 0.0f) +
+              body_argum_.lqr_k[15] * (-leg_argum_[0].d_theta + 0.0f) +
+              body_argum_.lqr_k[16] * (-leg_argum_[1].theta + 0.0f) +
+              body_argum_.lqr_k[17] * (-leg_argum_[1].d_theta + 0.0f);
 
-          leg_argum_[0].F0 = std::clamp(12.0f / (leg_argum_[0].L0 - 0.135f) + 20, 0.0f,
-                                        param_.static_F0[0] * 2.0f);
-          leg_argum_[1].F0 = std::clamp(12.0f / (leg_argum_[1].L0 - 0.135f) + 20, 0.0f,
-                                        param_.static_F0[1] * 2.0f);
+          leg_argum_[0].f0 = std::clamp(12.0f / (leg_argum_[0].l0 - 0.135f) + 20, 0.0f,
+                                        param_.static_f0[0] * 2.0f);
+          leg_argum_[1].f0 = std::clamp(12.0f / (leg_argum_[1].l0 - 0.135f) + 20, 0.0f,
+                                        param_.static_f0[1] * 2.0f);
 
           for (int i = 0; i < 4; i++)
           {
@@ -1018,58 +1028,58 @@ class Wheelleg
       /*单侧腿推力 =
        * roll推力(交龙使用单环直接出力矩)+机体加腿静态重力+侧向惯性力矩补偿+pid控制默认腿长
        */
-      // leg_argum_[0].F0 = param_.static_F0[0] +
-      // leglength_pid_left_.Calculate(leg_argum_[0].Delta_L0, leg_argum_[0].L0,
+      // leg_argum_[0].f0 = param_.static_f0[0] +
+      // leglength_pid_left_.Calculate(leg_argum_[0].delta_l0, leg_argum_[0].l0,
       // dt_)
       //     -
-      //     gyro_.z*body_argum_.x_dot_hat*(leg_argum_[0].L0+param_.wheel_radius)/0.23f*(8+0.5*0.7*leg_argum_[0].L0);
-      // leg_argum_[1].F0 = param_.static_F0[1] +
-      // leglength_pid_right_.Calculate(leg_argum_[1].Delta_L0,
-      // leg_argum_[1].L0, dt_)
+      //     gyro_.z*body_argum_.x_dot_hat*(leg_argum_[0].l0+param_.wheel_radius)/0.23f*(8+0.5*0.7*leg_argum_[0].l0);
+      // leg_argum_[1].f0 = param_.static_f0[1] +
+      // leglength_pid_right_.Calculate(leg_argum_[1].delta_l0,
+      // leg_argum_[1].l0, dt_)
       //     +
-      //     gyro_.z*body_argum_.x_dot_hat*(leg_argum_[1].L0+param_.wheel_radius)/0.23f*(8+0.5*0.7*leg_argum_[1].L0);
+      //     gyro_.z*body_argum_.x_dot_hat*(leg_argum_[1].l0+param_.wheel_radius)/0.23f*(8+0.5*0.7*leg_argum_[1].l0);
 
       // body_argum_.yaw_force = 0.0f;
       /* 轮毂输出计算 */
-      wheel_motor_out_[0] = -(leg_argum_[0].Tw + leg_argum_[0].Tw_adapt);
-      wheel_motor_out_[1] = (leg_argum_[1].Tw + leg_argum_[1].Tw_adapt);
+      wheel_motor_out_[0] = -(leg_argum_[0].tw + leg_argum_[0].tw_adapt);
+      wheel_motor_out_[1] = (leg_argum_[1].tw + leg_argum_[1].tw_adapt);
       /*偏置腿力矩补偿*/
-      this->leg_argum_[0].Delta_Tp = 0.0f;
-      this->leg_argum_[1].Delta_Tp = 0.0f;
+      this->leg_argum_[0].delta_tp = 0.0f;
+      this->leg_argum_[1].delta_tp = 0.0f;
 
       auto result3 = vmc_left_->VMCinserve(-leg_argum_[0].phi1_, -leg_argum_[0].phi4_,
-                                           -(leg_argum_[0].Tp + leg_argum_[0].Delta_Tp),
-                                           leg_argum_[0].F0 - leg_argum_[0].spring_force);
-      leg_argum_[0].T1 = std::get<0>(result3);
-      leg_argum_[0].T2 = std::get<1>(result3);
+                                           -(leg_argum_[0].tp + leg_argum_[0].delta_tp),
+                                           leg_argum_[0].f0 - leg_argum_[0].spring_force);
+      leg_argum_[0].t1 = std::get<0>(result3);
+      leg_argum_[0].t2 = std::get<1>(result3);
 
       auto result4 =
           vmc_right_->VMCinserve(-leg_argum_[1].phi1_, -leg_argum_[1].phi4_,
-                                 -(leg_argum_[1].Tp + leg_argum_[1].Delta_Tp),
-                                 leg_argum_[1].F0 - leg_argum_[1].spring_force);
-      leg_argum_[1].T1 = -std::get<0>(result4);
-      leg_argum_[1].T2 = -std::get<1>(result4);
+                                 -(leg_argum_[1].tp + leg_argum_[1].delta_tp),
+                                 leg_argum_[1].f0 - leg_argum_[1].spring_force);
+      leg_argum_[1].t1 = -std::get<0>(result4);
+      leg_argum_[1].t2 = -std::get<1>(result4);
 
       /* 下一次速度预测 xd_pred = A*X*dt + B*U*dt +  xd_now 模型预测效果一般
        * 噪声较大 A,B矩阵调试时均为0.15腿长时值 */
       // leg_argum_[0].x_dot_pred =
       //     ((-57.9674 * leg_argum_[0].theta + 0.2460 * this->pit_) * dt_ +
-      //      (7.6489 * (leg_argum_[0].Tw) -
-      //       2.0618 * (leg_argum_[0].Tp + leg_argum_[0].Delta_Tp - 1.11)) *
+      //      (7.6489 * (leg_argum_[0].tw) -
+      //       2.0618 * (leg_argum_[0].tp + leg_argum_[0].delta_tp - 1.11)) *
       //          dt_) +
       //     leg_argum_[0].single_x_dot;
 
       // leg_argum_[1].x_dot_pred =
       //     ((-57.9674 * leg_argum_[1].theta + 0.2460 * this->pit_) * dt_ +
-      //      (7.6489 * (leg_argum_[1].Tw) -
-      //       2.0618 * (leg_argum_[1].Tp + leg_argum_[1].Delta_Tp - 1.11)) *
+      //      (7.6489 * (leg_argum_[1].tw) -
+      //       2.0618 * (leg_argum_[1].tp + leg_argum_[1].delta_tp - 1.11)) *
       //          dt_) +
       //     leg_argum_[1].single_x_dot;
 
-      hip_motor_out_[0] = leg_argum_[0].T1;
-      hip_motor_out_[1] = leg_argum_[0].T2;
-      hip_motor_out_[2] = leg_argum_[1].T1;
-      hip_motor_out_[3] = leg_argum_[1].T2;
+      hip_motor_out_[0] = leg_argum_[0].t1;
+      hip_motor_out_[1] = leg_argum_[0].t2;
+      hip_motor_out_[2] = leg_argum_[1].t1;
+      hip_motor_out_[3] = leg_argum_[1].t2;
     }
     else if (current_mode_ == RESET)
     {
@@ -1125,19 +1135,19 @@ class Wheelleg
         }
         /*保证腿伸长*/
 
-        leg_argum_[0].Tp = 18 * this->theta_pid_left_.Calculate(
+        leg_argum_[0].tp = 18 * this->theta_pid_left_.Calculate(
                                     leg_argum_[0].target_theta, leg_argum_[0].theta, dt_);
 
-        leg_argum_[0].F0 =
-            20.0f + leglength_pid_left_.Calculate(0.34f, this->leg_argum_[0].L0,
-                                                  this->leg_argum_[0].d_L0, this->dt_);
+        leg_argum_[0].f0 =
+            20.0f + leglength_pid_left_.Calculate(0.34f, this->leg_argum_[0].l0,
+                                                  this->leg_argum_[0].d_l0, this->dt_);
 
-        leg_argum_[1].Tp = 18 * this->theta_pid_right_.Calculate(
+        leg_argum_[1].tp = 18 * this->theta_pid_right_.Calculate(
                                     leg_argum_[1].target_theta, leg_argum_[1].theta, dt_);
 
-        leg_argum_[1].F0 =
-            20.0f + leglength_pid_right_.Calculate(0.34f, this->leg_argum_[1].L0,
-                                                   this->leg_argum_[1].d_L0, this->dt_);
+        leg_argum_[1].f0 =
+            20.0f + leglength_pid_right_.Calculate(0.34f, this->leg_argum_[1].l0,
+                                                   this->leg_argum_[1].d_l0, this->dt_);
       }
       else if (body_argum_.pit_ < -0.87f)
       {
@@ -1183,19 +1193,19 @@ class Wheelleg
           leg_argum_[0].target_theta = RangeAnglePI(leg_argum_[0].target_theta);
         }
 
-        leg_argum_[0].Tp = 18 * this->theta_pid_left_.Calculate(
+        leg_argum_[0].tp = 18 * this->theta_pid_left_.Calculate(
                                     leg_argum_[0].target_theta, leg_argum_[0].theta, dt_);
 
-        leg_argum_[0].F0 =
-            20.0f + leglength_pid_left_.Calculate(0.34f, this->leg_argum_[0].L0,
-                                                  this->leg_argum_[0].d_L0, this->dt_);
+        leg_argum_[0].f0 =
+            20.0f + leglength_pid_left_.Calculate(0.34f, this->leg_argum_[0].l0,
+                                                  this->leg_argum_[0].d_l0, this->dt_);
 
-        leg_argum_[1].Tp = 18 * this->theta_pid_right_.Calculate(
+        leg_argum_[1].tp = 18 * this->theta_pid_right_.Calculate(
                                     leg_argum_[1].target_theta, leg_argum_[1].theta, dt_);
 
-        leg_argum_[1].F0 =
-            20.0f + leglength_pid_right_.Calculate(0.34f, this->leg_argum_[1].L0,
-                                                   this->leg_argum_[1].d_L0, this->dt_);
+        leg_argum_[1].f0 =
+            20.0f + leglength_pid_right_.Calculate(0.34f, this->leg_argum_[1].l0,
+                                                   this->leg_argum_[1].d_l0, this->dt_);
       }
       else
       {
@@ -1204,13 +1214,13 @@ class Wheelleg
           leg_argum_[0].target_theta = RampBack(leg_argum_[0].target_theta, 0.0f, 0.005f);
           leg_argum_[0].target_theta = RangeAnglePI(leg_argum_[0].target_theta);
 
-          leg_argum_[0].Tp =
+          leg_argum_[0].tp =
               10 * this->theta_pid_left_.Calculate(leg_argum_[0].target_theta,
                                                    leg_argum_[0].theta, dt_);
 
-          leg_argum_[0].Delta_L0 = 0.34f;
-          leg_argum_[0].F0 = leglength_pid_left_.Calculate(
-              leg_argum_[0].Delta_L0, this->leg_argum_[0].L0, this->leg_argum_[0].d_L0,
+          leg_argum_[0].delta_l0 = 0.34f;
+          leg_argum_[0].f0 = leglength_pid_left_.Calculate(
+              leg_argum_[0].delta_l0, this->leg_argum_[0].l0, this->leg_argum_[0].d_l0,
               this->dt_);
         }
         else
@@ -1219,15 +1229,15 @@ class Wheelleg
               RampTowards(leg_argum_[0].target_theta, 0.0f, 0.005f);
           leg_argum_[0].target_theta = RangeAnglePI(leg_argum_[0].target_theta);
 
-          leg_argum_[0].Tp =
+          leg_argum_[0].tp =
               10 * this->theta_pid_left_.Calculate(leg_argum_[0].target_theta,
                                                    leg_argum_[0].theta, dt_);
 
-          leg_argum_[0].Delta_L0 = 0.05086f / cosf(leg_argum_[0].theta);
-          leg_argum_[0].Delta_L0 = std::clamp(leg_argum_[0].Delta_L0, -0.03f, 0.34f);
-          leg_argum_[0].F0 = -20.0f + leglength_pid_left_.Calculate(
-                                          leg_argum_[0].Delta_L0, this->leg_argum_[0].L0,
-                                          this->leg_argum_[0].d_L0, this->dt_);
+          leg_argum_[0].delta_l0 = 0.05086f / cosf(leg_argum_[0].theta);
+          leg_argum_[0].delta_l0 = std::clamp(leg_argum_[0].delta_l0, -0.03f, 0.34f);
+          leg_argum_[0].f0 = -20.0f + leglength_pid_left_.Calculate(
+                                          leg_argum_[0].delta_l0, this->leg_argum_[0].l0,
+                                          this->leg_argum_[0].d_l0, this->dt_);
         }
 
         if (leg_argum_[1].theta < -1.57 / 2 or leg_argum_[1].theta > 1.57)
@@ -1235,13 +1245,13 @@ class Wheelleg
           leg_argum_[1].target_theta = RampBack(leg_argum_[1].target_theta, 0.0f, 0.005f);
           leg_argum_[1].target_theta = RangeAnglePI(leg_argum_[1].target_theta);
 
-          leg_argum_[1].Tp =
+          leg_argum_[1].tp =
               10 * this->theta_pid_right_.Calculate(leg_argum_[1].target_theta,
                                                     leg_argum_[1].theta, dt_);
 
-          leg_argum_[1].Delta_L0 = 0.34f;
-          leg_argum_[1].F0 = leglength_pid_right_.Calculate(
-              leg_argum_[1].Delta_L0, this->leg_argum_[1].L0, this->leg_argum_[1].d_L0,
+          leg_argum_[1].delta_l0 = 0.34f;
+          leg_argum_[1].f0 = leglength_pid_right_.Calculate(
+              leg_argum_[1].delta_l0, this->leg_argum_[1].l0, this->leg_argum_[1].d_l0,
               this->dt_);
         }
         else
@@ -1250,33 +1260,33 @@ class Wheelleg
               RampTowards(leg_argum_[1].target_theta, 0.0f, 0.005f);
           leg_argum_[1].target_theta = RangeAnglePI(leg_argum_[1].target_theta);
 
-          leg_argum_[1].Tp =
+          leg_argum_[1].tp =
               10 * this->theta_pid_right_.Calculate(leg_argum_[1].target_theta,
                                                     leg_argum_[1].theta, dt_);
 
-          leg_argum_[1].Delta_L0 = 0.05086f / cosf(leg_argum_[1].theta);
-          leg_argum_[1].Delta_L0 = std::clamp(leg_argum_[1].Delta_L0, -0.03f, 0.34f);
-          leg_argum_[1].F0 = -20.0f + leglength_pid_right_.Calculate(
-                                          leg_argum_[1].Delta_L0, this->leg_argum_[1].L0,
-                                          this->leg_argum_[1].d_L0, this->dt_);
+          leg_argum_[1].delta_l0 = 0.05086f / cosf(leg_argum_[1].theta);
+          leg_argum_[1].delta_l0 = std::clamp(leg_argum_[1].delta_l0, -0.03f, 0.34f);
+          leg_argum_[1].f0 = -20.0f + leglength_pid_right_.Calculate(
+                                          leg_argum_[1].delta_l0, this->leg_argum_[1].l0,
+                                          this->leg_argum_[1].d_l0, this->dt_);
         }
       }
       auto result3 = vmc_left_->VMCinserve(-leg_argum_[0].phi1_, -leg_argum_[0].phi4_,
-                                           -leg_argum_[0].Tp,
-                                           leg_argum_[0].F0 - leg_argum_[0].spring_force);
-      leg_argum_[0].T1 = std::get<0>(result3);
-      leg_argum_[0].T2 = std::get<1>(result3);
+                                           -leg_argum_[0].tp,
+                                           leg_argum_[0].f0 - leg_argum_[0].spring_force);
+      leg_argum_[0].t1 = std::get<0>(result3);
+      leg_argum_[0].t2 = std::get<1>(result3);
 
       auto result4 = vmc_right_->VMCinserve(
-          -leg_argum_[1].phi1_, -leg_argum_[1].phi4_, -leg_argum_[1].Tp,
-          leg_argum_[1].F0 - leg_argum_[1].spring_force);
-      leg_argum_[1].T1 = -std::get<0>(result4);
-      leg_argum_[1].T2 = -std::get<1>(result4);
+          -leg_argum_[1].phi1_, -leg_argum_[1].phi4_, -leg_argum_[1].tp,
+          leg_argum_[1].f0 - leg_argum_[1].spring_force);
+      leg_argum_[1].t1 = -std::get<0>(result4);
+      leg_argum_[1].t2 = -std::get<1>(result4);
 
-      hip_motor_out_[0] = leg_argum_[0].T1;
-      hip_motor_out_[1] = leg_argum_[0].T2;
-      hip_motor_out_[2] = leg_argum_[1].T1;
-      hip_motor_out_[3] = leg_argum_[1].T2;
+      hip_motor_out_[0] = leg_argum_[0].t1;
+      hip_motor_out_[1] = leg_argum_[0].t2;
+      hip_motor_out_[2] = leg_argum_[1].t1;
+      hip_motor_out_[3] = leg_argum_[1].t2;
     }
     else if (current_mode_ == STAIR)
     {
@@ -1290,8 +1300,8 @@ class Wheelleg
               RampTowards(leg_argum_[0].target_theta, 1.57f, 0.01f);
           leg_argum_[1].target_theta =
               RampTowards(leg_argum_[1].target_theta, 1.57f, 0.01f);
-          leg_argum_[0].Delta_L0 = 0.34f;
-          leg_argum_[1].Delta_L0 = 0.34f;
+          leg_argum_[0].delta_l0 = 0.34f;
+          leg_argum_[1].delta_l0 = 0.34f;
           if (fabsf(leg_argum_[0].target_theta - 1.57f) < 0.015f and
               fabsf(leg_argum_[1].target_theta - 1.57f) < 0.015f)
           {
@@ -1299,9 +1309,9 @@ class Wheelleg
           }
           break;
         case 1:
-          leg_argum_[0].Delta_L0 = RampTowards(leg_argum_[0].Delta_L0, 0.12f, 0.002f);
-          leg_argum_[1].Delta_L0 = RampTowards(leg_argum_[1].Delta_L0, 0.12f, 0.002f);
-          if (leg_argum_[0].Delta_L0 < 0.121f and leg_argum_[1].Delta_L0 < 0.121f)
+          leg_argum_[0].delta_l0 = RampTowards(leg_argum_[0].delta_l0, 0.12f, 0.002f);
+          leg_argum_[1].delta_l0 = RampTowards(leg_argum_[1].delta_l0, 0.12f, 0.002f);
+          if (leg_argum_[0].delta_l0 < 0.121f and leg_argum_[1].delta_l0 < 0.121f)
           {
             body_argum_.stair_phase = 2;
           }
@@ -1321,33 +1331,33 @@ class Wheelleg
           break;
       }
 
-      leg_argum_[0].Tp = 15 * theta_pid_left_.Calculate(leg_argum_[0].target_theta,
+      leg_argum_[0].tp = 15 * theta_pid_left_.Calculate(leg_argum_[0].target_theta,
                                                         leg_argum_[0].theta, dt_);
-      leg_argum_[1].Tp = 15 * theta_pid_right_.Calculate(leg_argum_[1].target_theta,
+      leg_argum_[1].tp = 15 * theta_pid_right_.Calculate(leg_argum_[1].target_theta,
                                                          leg_argum_[1].theta, dt_);
-      leg_argum_[0].F0 =
-          1.5f * leglength_pid_left_.Calculate(leg_argum_[0].Delta_L0, leg_argum_[0].L0,
-                                               leg_argum_[0].d_L0, dt_);
-      leg_argum_[1].F0 =
-          1.5f * leglength_pid_right_.Calculate(leg_argum_[1].Delta_L0, leg_argum_[1].L0,
-                                                leg_argum_[1].d_L0, dt_);
+      leg_argum_[0].f0 =
+          1.5f * leglength_pid_left_.Calculate(leg_argum_[0].delta_l0, leg_argum_[0].l0,
+                                               leg_argum_[0].d_l0, dt_);
+      leg_argum_[1].f0 =
+          1.5f * leglength_pid_right_.Calculate(leg_argum_[1].delta_l0, leg_argum_[1].l0,
+                                                leg_argum_[1].d_l0, dt_);
 
       auto result3 = vmc_left_->VMCinserve(-leg_argum_[0].phi1_, -leg_argum_[0].phi4_,
-                                           -leg_argum_[0].Tp,
-                                           leg_argum_[0].F0 - leg_argum_[0].spring_force);
-      leg_argum_[0].T1 = std::get<0>(result3);
-      leg_argum_[0].T2 = std::get<1>(result3);
+                                           -leg_argum_[0].tp,
+                                           leg_argum_[0].f0 - leg_argum_[0].spring_force);
+      leg_argum_[0].t1 = std::get<0>(result3);
+      leg_argum_[0].t2 = std::get<1>(result3);
 
       auto result4 = vmc_right_->VMCinserve(
-          -leg_argum_[1].phi1_, -leg_argum_[1].phi4_, -leg_argum_[1].Tp,
-          leg_argum_[1].F0 - leg_argum_[1].spring_force);
-      leg_argum_[1].T1 = -std::get<0>(result4);
-      leg_argum_[1].T2 = -std::get<1>(result4);
+          -leg_argum_[1].phi1_, -leg_argum_[1].phi4_, -leg_argum_[1].tp,
+          leg_argum_[1].f0 - leg_argum_[1].spring_force);
+      leg_argum_[1].t1 = -std::get<0>(result4);
+      leg_argum_[1].t2 = -std::get<1>(result4);
 
-      hip_motor_out_[0] = leg_argum_[0].T1;
-      hip_motor_out_[1] = leg_argum_[0].T2;
-      hip_motor_out_[2] = leg_argum_[1].T1;
-      hip_motor_out_[3] = leg_argum_[1].T2;
+      hip_motor_out_[0] = leg_argum_[0].t1;
+      hip_motor_out_[1] = leg_argum_[0].t2;
+      hip_motor_out_[2] = leg_argum_[1].t1;
+      hip_motor_out_[3] = leg_argum_[1].t2;
     }
   }
 
@@ -1377,7 +1387,7 @@ class Wheelleg
       case STAND:
       case ROTOR:
 
-        if (!body_argum_.C620_ready_flag_ or
+        if (!body_argum_.c620_ready_flag_ or
             (this->hip_motor_[0]->GetFeedback().state != 1 or
              this->hip_motor_[1]->GetFeedback().state != 1 or
              this->hip_motor_[2]->GetFeedback().state != 1 or
@@ -1427,7 +1437,7 @@ class Wheelleg
         this->wheel_motor_[1]->Relax();
 
         /*上电时c620启动较慢 防止关节电机转动轮子导致c620自检失败*/
-        if (body_argum_.C620_ready_flag_)
+        if (body_argum_.c620_ready_flag_)
         {
           for (int i = 0; i < 4; i++)
           {
@@ -1447,8 +1457,8 @@ class Wheelleg
             }
           }
           if (fabsf(leg_argum_[0].theta) < 0.15f and
-              fabsf(leg_argum_[1].theta) < 0.15f and leg_argum_[0].L0 < 0.17f and
-              leg_argum_[1].L0 < 0.17f and body_argum_.pit_ < 1.0f and
+              fabsf(leg_argum_[1].theta) < 0.15f and leg_argum_[0].l0 < 0.17f and
+              leg_argum_[1].l0 < 0.17f and body_argum_.pit_ < 1.0f and
               (this->hip_motor_[0]->GetFeedback().state == 1 and
                this->hip_motor_[1]->GetFeedback().state == 1 and
                this->hip_motor_[2]->GetFeedback().state == 1 and
@@ -1611,7 +1621,7 @@ class Wheelleg
         uint16_t leg_x1 = 1690;
         uint16_t leg_y1 = 480;
 
-        float leg_px = leg_argum_[0].L0 * 400;
+        float leg_px = leg_argum_[0].l0 * 400;
         uint16_t leg_x2 =
             static_cast<uint16_t>(leg_x1 - leg_px * sinf(leg_argum_[0].theta));
         uint16_t leg_y2 =
@@ -1629,7 +1639,7 @@ class Wheelleg
       {
         uint16_t leg_x3 = 1700;
         uint16_t leg_y3 = 480;
-        float leg_px1 = leg_argum_[1].L0 * 400;
+        float leg_px1 = leg_argum_[1].l0 * 400;
         uint16_t leg_x4 =
             static_cast<uint16_t>(leg_x3 - leg_px1 * sinf(leg_argum_[1].theta));
         uint16_t leg_y4 =
@@ -1855,16 +1865,16 @@ class Wheelleg
     float single_x_dot;                                     /*单侧轮位移*/
     float phi1_, phi4_;                                     /*关节角度*/
     float omega1_, omega4_;                                 /*关节角速度*/
-    float L0, d_L0;                                         /*腿长*/
+    float l0, d_l0;                                         /*腿长*/
     float theta, d_theta;                                   /*虚拟腿角度*/
-    float Tw, Tp;                                           /*控制力矩*/
-    float x_dot_pred, Tw_adapt;                             /*防打滑*/
-    float Tw_yaw_lim, Tp_yaw_lim, Tw_s_lim, Tp_s_lim;       /*移动输出限制*/
-    float F0, Fn, F1;                                       /*支持力正逆*/
+    float tw, tp;                                           /*控制力矩*/
+    float x_dot_pred, tw_adapt;                             /*防打滑*/
+    float tw_yaw_lim, tp_yaw_lim, tw_s_lim, tp_s_lim;       /*移动输出限制*/
+    float f0, fn, f1;                                       /*支持力正逆*/
     float spring_force;                                     /*弹簧推力*/
     bool onground_flag_ = false;                            /*离地标志*/
-    float T1, T2;                                           /*关节输出*/
-    float target_delta_l0, Delta_L0 = 0, Delta_Tp, Delta_F; /*部分过度项*/
+    float t1, t2;                                           /*关节输出*/
+    float target_delta_l0, delta_l0 = 0, delta_tp, delta_f; /*部分过度项*/
     float target_theta;                                     /*恢复模式腿角度*/
   } leg_argum_[2];
 
@@ -1872,7 +1882,7 @@ class Wheelleg
   {
     /*机体状态*/
     float yaw_, pit_, gyro_;
-    float sK_offset, thetaK_offset_, pitK_offset_;
+    float s_k_offset, theta_k_offset_, pit_k_offset_;
     float roll_out;
     float target_x, target_dot_x;
     /*位移相关*/
@@ -1892,9 +1902,9 @@ class Wheelleg
     uint32_t jump_start_time = 0;
     uint32_t jump_time = 0;
     /*K反馈系数矩阵*/
-    std::array<float, 40> LQR_K{};
+    std::array<float, 40> lqr_k{};
     float est_power = 0.0f;
-    bool C620_ready_flag_ = false;
+    bool c620_ready_flag_ = false;
     uint8_t stair_phase = 0;
     float cap_energy = 0.0f;
   } body_argum_;
