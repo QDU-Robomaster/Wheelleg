@@ -11,7 +11,7 @@
 控制线程 `WheellegThread`（优先级 MEDIUM，栈深 `task_stack_depth`）每 2 ms 运行一次：
 
 1. 读取订阅的 topic（异步订阅，只取最新值）：
-   - `chassis_cmd`（`CMD::ChassisCMD`）：底盘运动命令，`self_define` 中 `BOOST` 为加速/恢复
+   - `param.chassis_cmd_topic_name`（默认 `chassis_cmd`，`CMD::ChassisCMD`）：底盘运动命令，`self_define` 中 `BOOST` 为加速/恢复
      默认腿长，`STRETCH` 为伸腿（持续约 200 个周期后进入上台阶准备）。
    - `atomimu_eulr`、`atomimu_gyro`、`atomimu_absaccl`：机体姿态、角速度和加速度，由
      `QDU-Robomaster/AtomImuCan` 发布。
@@ -100,6 +100,8 @@ Wheelleg(CMD& cmd,
   - `max_speed`：最大速度，m/s，默认 `2.8`。
   - `k_poly_coefficient[40][6]`：LQR 增益矩阵 40 个元素的拟合系数，每个元素是左右腿长的
     二元二次多项式（见 `LegVmc::Lqr2KCalc`）。
+- `chassis_cmd_topic_name`：订阅的底盘控制命令 Topic，默认 `"chassis_cmd"`，须与 CMD 的
+  `chassis_cmd_topic_name` 一致。
 
 ## 使用
 
@@ -451,6 +453,7 @@ modules:
                   - -2.8077f
                   - 1.9812f
                   - 7.4797f
+          chassis_cmd_topic_name: '"chassis_cmd"'
 ```
 
 BSP 侧：
