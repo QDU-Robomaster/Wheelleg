@@ -2,7 +2,7 @@
 #pragma once
 // clang-format off
 /* === MODULE MANIFEST V2 ===
-module_description: WheelLegChassis controller
+module_description: 轮腿底盘控制模块：四个达妙关节电机驱动左右五连杆腿，两个大疆轮毂电机驱动左右轮 / Wheel-leg chassis control Module with four DM hip motors driving the two five-bar legs and two DJI hub motors driving the wheels
 depends:
 - id: QDU-Robomaster/LegVmc
   ref: same-or-dev
@@ -46,8 +46,6 @@ depends:
 #include "timebase.hpp"
 #define GRAVITY 9.79f
 #define UI_LAYER_CHASSIS 1
-/*/////////////////////////////////WARNING\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
-/*---------------------------您正在审阅高达车的代码---------------------------*/
 class Wheelleg
 {
  public:
@@ -423,20 +421,12 @@ class Wheelleg
       body_argum_.limit_power = 50;
     }
 
-    /*电机粗略功率模型:角速度*力矩*3^(0.5)*K  M3508:K=1 LK9025(35T):K=3
-     * 出自山海机甲开源 */
-    // body_argum_.est_power=1.732f*(
-    // fabsf(wheel_motor_[0]->GetFeedback().torque*0.3f/19.2f*15.765f*wheel_motor_[0]->GetFeedback().omega/15.765f)
-    // +
-    //     fabsf(wheel_motor_[1]->GetFeedback().torque*0.3f/19.2f*15.765f*wheel_motor_[1]->GetFeedback().omega/15.765f));
     /* 速度限制 设腿长最长时速度约1m/s 腿长0.15时最大速度约2.6
      * 由交龙第一视角得出(根据自家超电)*/
 
     body_argum_.expspeed =
         std::clamp(0.5f / (leg_argum_[0].l0 + leg_argum_[1].l0 + 0.2f) + 1.45f, 0.5f,
                    param_.max_speed);
-
-    // 腿长线性前馈：F0 = 166*L0 + 95
 
     body_argum_.cap_energy = GetCapEnergy();
 
@@ -450,7 +440,7 @@ class Wheelleg
     }
     else if (body_argum_.cap_energy < 0.5f)
     {
-      // 0.3-0.6之间线性插值
+      // 能量在 0.3 到 0.5 之间时调整速度上限
       float energy_ratio = (body_argum_.cap_energy - 0.5f) / 0.2f;
       float speed_limit = min_speed + (max_speed_limit - min_speed) * energy_ratio;
       body_argum_.expspeed = std::min(body_argum_.expspeed, speed_limit);
@@ -516,14 +506,8 @@ class Wheelleg
           body_argum_.target_x = 0.0f;
           body_argum_.xhat = 0.0f;
         }
-        // if (body_argum_.yaw_switch_flag) {
-        //  body_argum_.target_yaw += 3.1416f;
-        // }
 
         body_argum_.target_yaw = RangeAnglePI(body_argum_.target_yaw);
-        // if(chassis_cmd_.y<-0.05f ){
-        // body_argum_.target_yaw = -atan2f(chassis_cmd_.y,-chassis_cmd_.x)
-        // - 1.571f; body_argum_.target_x =0.0f; body_argum_.xhat=0.0f; }
         if (fabsf(chassis_cmd_.y) > 0.05f)
         {
           body_argum_.target_x = 0.0f;
@@ -538,9 +522,6 @@ class Wheelleg
         body_argum_.target_dot_x = std::clamp(
             body_argum_.target_dot_x, -body_argum_.expspeed + fabsf(gyro_.z * 0.23f),
             body_argum_.expspeed - fabsf(gyro_.z * 0.23f));
-        /*双yaw零点*/
-        // if (yaw_ > M_PI / 2.0f) body_argum_.target_yaw = M_PI;
-        // if (yaw_ < -M_PI / 2.0f) body_argum_.target_yaw = M_PI;
 
         break;
       }
@@ -618,9 +599,6 @@ class Wheelleg
       }
     }
 
-    // leg_argum_[0].onground_flag_ = true;
-    // leg_argum_[1].onground_flag_ = true;
-
     if (current_mode_ == RELAX || current_mode_ == ROTOR || current_mode_ == STAND ||
         current_mode_ == JUMP)
     {
@@ -642,10 +620,6 @@ class Wheelleg
         s_limit_k = 0.45f;
         yaw_limit_k = 3.14f * 1.3f;
       }
-      // body_argum_.lqr_k[0]= 0.0f;
-      // body_argum_.lqr_k[10]=0.0f;
-      // body_argum_.lqr_k[20]=0.0f;
-      // body_argum_.lqr_k[30]=0.0f;
 
       /*交龙24青工会摩擦圆限制*/
       if (fabsf(body_argum_.x_dot_hat * gyro_.z) > 6.0f)
@@ -666,9 +640,6 @@ class Wheelleg
       /* 处理平衡点 应该与腿长和弹舱剩余弹量做拟合 */
       float leg_x = ((leg_argum_[0].l0 + leg_argum_[1].l0) / 2.0f);
       body_argum_.s_k_offset = 0.0f;
-      // body_argum_.theta_k_offset_ = 0.684f*powf(leg_x,2)-0.86f*leg_x+0.28f;
-      // body_argum_.theta_k_offset_ =
-      // -0.3476f*powf(leg_x,2)-0.0894f*leg_x+0.1476f;
       body_argum_.theta_k_offset_ = -0.31476241584544784 * leg_x + 0.21558012163788323;
       /*补偿偏心离心加速度对于pitch的力矩 w^2*r*M*lc 依据质心上下调整正负*/
       body_argum_.pit_k_offset_ =
@@ -864,10 +835,6 @@ class Wheelleg
       leg_argum_[1].delta_l0 =
           RampTowards(leg_argum_[1].delta_l0, leg_argum_[1].target_delta_l0, 0.01f);
 
-      // if (body_argum_.yaw_switch_flag and chassis_cmd_.self_define ==
-      // CMD::ChasStat::BOOST) { leg_argum_[0].delta_l0 = -0.03f;
-      // leg_argum_[1].delta_l0 = -0.03f;
-      // }
       leg_argum_[0].delta_l0 =
           std::clamp(leg_argum_[0].delta_l0, -0.06f, 0.4f - param_.static_l0[0]);
       leg_argum_[1].delta_l0 =
@@ -956,17 +923,6 @@ class Wheelleg
           {
             leg_argum_[1].f0 = vmc_right_->MaxFnSolve(-24) + leg_argum_[1].spring_force;
           }
-
-          // }else if(body_argum_.jump_time < 1000000){
-          //   leg_argum_[0].f0 = vmc_left_->MaxFnSolve(8) +
-          //   leg_argum_[0].spring_force;
-          // leg_argum_[1].f0 = vmc_right_->MaxFnSolve(8) +
-          // leg_argum_[1].spring_force;
-
-          //   if (body_argum_.jump_time>80000 and( leg_argum_[0].l0<0.16f or
-          //   leg_argum_[1].l0<0.16f) )
-          // {  body_argum_.jump_time =0;
-          //    SetMode(STAND);}
         }
         else if (body_argum_.jump_time < 750000)
         {
@@ -1031,18 +987,6 @@ class Wheelleg
       /*单侧腿推力 =
        * roll推力(交龙使用单环直接出力矩)+机体加腿静态重力+侧向惯性力矩补偿+pid控制默认腿长
        */
-      // leg_argum_[0].f0 = param_.static_f0[0] +
-      // leglength_pid_left_.Calculate(leg_argum_[0].delta_l0, leg_argum_[0].l0,
-      // dt_)
-      //     -
-      //     gyro_.z*body_argum_.x_dot_hat*(leg_argum_[0].l0+param_.wheel_radius)/0.23f*(8+0.5*0.7*leg_argum_[0].l0);
-      // leg_argum_[1].f0 = param_.static_f0[1] +
-      // leglength_pid_right_.Calculate(leg_argum_[1].delta_l0,
-      // leg_argum_[1].l0, dt_)
-      //     +
-      //     gyro_.z*body_argum_.x_dot_hat*(leg_argum_[1].l0+param_.wheel_radius)/0.23f*(8+0.5*0.7*leg_argum_[1].l0);
-
-      // body_argum_.yaw_force = 0.0f;
       /* 轮毂输出计算 */
       wheel_motor_out_[0] = -(leg_argum_[0].tw + leg_argum_[0].tw_adapt);
       wheel_motor_out_[1] = (leg_argum_[1].tw + leg_argum_[1].tw_adapt);
@@ -1062,22 +1006,6 @@ class Wheelleg
                                  leg_argum_[1].f0 - leg_argum_[1].spring_force);
       leg_argum_[1].t1 = -std::get<0>(result4);
       leg_argum_[1].t2 = -std::get<1>(result4);
-
-      /* 下一次速度预测 xd_pred = A*X*dt + B*U*dt +  xd_now 模型预测效果一般
-       * 噪声较大 A,B矩阵调试时均为0.15腿长时值 */
-      // leg_argum_[0].x_dot_pred =
-      //     ((-57.9674 * leg_argum_[0].theta + 0.2460 * this->pit_) * dt_ +
-      //      (7.6489 * (leg_argum_[0].tw) -
-      //       2.0618 * (leg_argum_[0].tp + leg_argum_[0].delta_tp - 1.11)) *
-      //          dt_) +
-      //     leg_argum_[0].single_x_dot;
-
-      // leg_argum_[1].x_dot_pred =
-      //     ((-57.9674 * leg_argum_[1].theta + 0.2460 * this->pit_) * dt_ +
-      //      (7.6489 * (leg_argum_[1].tw) -
-      //       2.0618 * (leg_argum_[1].tp + leg_argum_[1].delta_tp - 1.11)) *
-      //          dt_) +
-      //     leg_argum_[1].single_x_dot;
 
       hip_motor_out_[0] = leg_argum_[0].t1;
       hip_motor_out_[1] = leg_argum_[0].t2;
@@ -1369,8 +1297,6 @@ class Wheelleg
    */
   void Control()
   {
-    //  wheel_motor_out_[0] = std::clamp(wheel_motor_out_[0], -6.00f, 6.00f);
-    //  wheel_motor_out_[1] = std::clamp(wheel_motor_out_[1], -6.00f, 6.00f);
     hip_motor_out_[0] = std::clamp(hip_motor_out_[0], -35.0f, 35.0f);
     hip_motor_out_[1] = std::clamp(hip_motor_out_[1], -35.0f, 35.0f);
     hip_motor_out_[2] = std::clamp(hip_motor_out_[2], -35.0f, 35.0f);
@@ -1528,13 +1454,6 @@ class Wheelleg
             this->hip_motor_[i]->ClearError();
           }
         }
-
-        // this->wheel_motor_[0]->Relax();
-        // this->wheel_motor_[1]->Relax();
-        // hip_motor_[0]->MITControl(0,0,0,0,0);
-        // hip_motor_[1]->MITControl(0,0,0,0,0);
-        // hip_motor_[2]->MITControl(0,0,0,0,0);
-        // hip_motor_[3]->MITControl(0,0,0,0,0);
 
         break;
     }
