@@ -46,84 +46,161 @@ depends:
 #include "timebase.hpp"
 #define GRAVITY 9.79f
 #define UI_LAYER_CHASSIS 1
+/**
+ * @brief 轮腿底盘控制模块。
+ *        Wheel-leg chassis control Module.
+ *
+ * @details 四个达妙关节电机驱动左右五连杆腿，两个 RoboMaster 轮毂电机驱动左右轮；
+ *          控制线程每 2 ms 读取订阅的 Topic、更新反馈、计算输出并控制电机。
+ *          Four DM hip motors drive the two five-bar legs and two RoboMaster hub motors
+ *          drive the wheels; the control thread reads the subscribed Topics, updates the
+ *          feedback, computes the outputs and drives the motors every 2 ms.
+ */
 class Wheelleg
 {
  public:
+  /**
+   * @brief 模式切换事件，通过 `GetEvent()` 的事件对象激活。
+   *        Mode switch events, activated on the event object of `GetEvent()`.
+   */
   enum class WheellegEvent : uint8_t
   {
-    SET_MODE_RELAX,
-    SET_MODE_STAND,
-    SET_MODE_ROTOR,
-    SET_MODE_RESET,
-    SET_MODE_JUMP,
-  };
-
-  typedef enum : uint8_t
-  {
-    RELAX,
-    STAND,
-    ROTOR,
-    RESET,
-    JUMP,
-    STAIR
-  } Mode;
-
-  enum Wheellegmode : uint32_t
-  {
-    NOW_MODE_RESET = 0x12212508,
-    NOW_MODE_MOVE = 0x12212509,
-  };
-
-  struct Vector3
-  {
-    float x = 0.0f;
-    float y = 0.0f;
-    float z = 0.0f;
-  };
-
-  struct Euler
-  {
-    float pit = 0.0f;
-    float rol = 0.0f;
-    float yaw = 0.0f;
-  };
-
-  struct WheellegParam
-  {
-    std::array<LibXR::CycleValue<float>, 4> mech_zero; /*关节电机偏置零点 单位rad*/
-    std::array<float, 2> static_l0;                    /*基本腿长 单位m*/
-    std::array<float, 2> static_f0;                    /*基本推力 单位N */
-    float wheel_radius;                                /*轮子半径 单位m*/
-    float max_speed;                                   /*最大速度 单位m/s*/
-    float k_poly_coefficient[40][6];                   /*K矩阵*/
-  };
-
-  struct Param
-  {
-    uint32_t task_stack_depth;  ///< 任务堆栈深度
-    LegVmc::Param vmc_left_param;  ///< 左腿参数
-    LegVmc::Param vmc_right_param;  ///< 右腿参数
-    LibXR::PID<float>::Param pid_leglength_left_param;  ///< 左腿长pid参数
-    LibXR::PID<float>::Param pid_leglength_right_param;  ///< 右腿长pid参数
-    LibXR::PID<float>::Param pid_theta_left_param;  ///< 左腿摆角pid参数
-    LibXR::PID<float>::Param pid_theta_right_param;  ///< 右腿摆角pid参数
-    LibXR::PID<float>::Param pid_roll_param;  ///< roll轴pid参数
-    DMMotor::Param hip_leftfront_param;  ///< 左前关节电机参数
-    DMMotor::Param hip_leftback_param;  ///< 左后关节电机参数
-    DMMotor::Param hip_rightfront_param;  ///< 右前关节电机参数
-    DMMotor::Param hip_rightback_param;  ///< 右后关节电机参数
-    WheellegParam robot_param;
-    const char* chassis_cmd_topic_name;  ///< 订阅的底盘控制命令 Topic 名称
+    SET_MODE_RELAX,  ///< 切换到 RELAX Switch to RELAX
+    SET_MODE_STAND,  ///< 切换到 STAND Switch to STAND
+    SET_MODE_ROTOR,  ///< 切换到 ROTOR Switch to ROTOR
+    SET_MODE_RESET,  ///< 切换到 RESET Switch to RESET
+    SET_MODE_JUMP,   ///< 切换到 JUMP Switch to JUMP
   };
 
   /**
-   * @brief wheelleg 类的构造函数
+   * @brief 运行模式。
+   *        Run modes.
+   */
+  typedef enum : uint8_t
+  {
+    RELAX,  ///< 轮电机放松，关节电机失能 Wheel motors relaxed, hip motors disabled
+    STAND,  ///< 站立平衡 Standing balance
+    ROTOR,  ///< 小陀螺 Spinning
+    RESET,  ///< 收腿复位 Retract and reset the legs
+    JUMP,   ///< 跳跃 Jump
+    STAIR   ///< 上台阶 Stair climbing
+  } Mode;
+
+  /**
+   * @brief 模式进入时对外激活的事件 ID。
+   *        Event IDs activated on mode entry.
+   */
+  enum Wheellegmode : uint32_t
+  {
+    NOW_MODE_RESET = 0x12212508,  ///< 进入 RESET 时激活 Activated on RESET entry
+    NOW_MODE_MOVE = 0x12212509,   ///< 进入 STAND/ROTOR 时激活 Activated on STAND/ROTOR
+  };
+
+  /**
+   * @brief 三维向量。
+   *        Three-dimensional vector.
+   */
+  struct Vector3
+  {
+    float x = 0.0f;  ///< x 分量 x component
+    float y = 0.0f;  ///< y 分量 y component
+    float z = 0.0f;  ///< z 分量 z component
+  };
+
+  /**
+   * @brief 欧拉角。
+   *        Euler angles.
+   */
+  struct Euler
+  {
+    float pit = 0.0f;  ///< pitch，单位 rad Pitch in rad
+    float rol = 0.0f;  ///< roll，单位 rad Roll in rad
+    float yaw = 0.0f;  ///< yaw，单位 rad Yaw in rad
+  };
+
+  /**
+   * @brief 机体参数。
+   *        Body parameters.
+   */
+  struct WheellegParam
+  {
+    std::array<LibXR::CycleValue<float>, 4> mech_zero;  ///< 关节电机零点偏置，单位 rad
+    ///< Zero offsets of the four hip motors in rad
+    std::array<float, 2> static_l0;  ///< 左右腿基础腿长，单位 m
+    ///< Base leg length of the left and right legs in m
+    std::array<float, 2> static_f0;  ///< 左右腿基础推力，单位 N
+    ///< Base thrust of the left and right legs in N
+    float wheel_radius;  ///< 轮半径，单位 m
+    ///< Wheel radius in m
+    float max_speed;  ///< 最大速度，单位 m/s
+    ///< Maximum speed in m/s
+    float k_poly_coefficient[40][6];  ///< LQR 增益矩阵 40 个元素的拟合系数
+    ///< Fitting coefficients of the 40 elements of the LQR gain matrix
+  };
+
+  /**
+   * @brief 构造参数。
+   *        Construction parameters.
+   */
+  struct Param
+  {
+    uint32_t task_stack_depth;  ///< 控制线程栈深
+    ///< Control thread stack depth
+    LegVmc::Param vmc_left_param;  ///< 左腿连杆参数
+    ///< Link parameters of the left leg
+    LegVmc::Param vmc_right_param;  ///< 右腿连杆参数
+    ///< Link parameters of the right leg
+    LibXR::PID<float>::Param pid_leglength_left_param;  ///< 左腿长 PID
+    ///< Left leg-length PID
+    LibXR::PID<float>::Param pid_leglength_right_param;  ///< 右腿长 PID
+    ///< Right leg-length PID
+    LibXR::PID<float>::Param pid_theta_left_param;  ///< 左腿摆角 PID
+    ///< Left leg swing-angle PID
+    LibXR::PID<float>::Param pid_theta_right_param;  ///< 右腿摆角 PID
+    ///< Right leg swing-angle PID
+    LibXR::PID<float>::Param pid_roll_param;  ///< roll 轴 PID
+    ///< Roll axis PID
+    DMMotor::Param hip_leftfront_param;  ///< 左前关节电机参数
+    ///< Left-front hip motor parameters
+    DMMotor::Param hip_leftback_param;  ///< 左后关节电机参数
+    ///< Left-back hip motor parameters
+    DMMotor::Param hip_rightfront_param;  ///< 右前关节电机参数
+    ///< Right-front hip motor parameters
+    DMMotor::Param hip_rightback_param;  ///< 右后关节电机参数
+    ///< Right-back hip motor parameters
+    WheellegParam robot_param;  ///< 机体参数
+    ///< Body parameters
+    const char* chassis_cmd_topic_name;  ///< 订阅的底盘控制命令 Topic 名称
+    ///< Name of the subscribed chassis command Topic
+  };
+
+  /**
+   * @brief 构造 Wheelleg：创建四个关节电机与左右腿解算对象，注册事件回调，启动控制线程与
+   *        UI 定时任务。
+   *        Construct Wheelleg: create the four hip motors and the left and right leg
+   *        solvers, register the event callbacks, and start the control thread and the UI
+   *        timer task.
    *
-   * @param CMD cmd传
-   * @param param Value configuration.
-   * @param wheel_left 指向左轮电机
-   * @param wheel_right 指向右轮电机
-   * @param WheellegParam 机体参数
+   * @param cmd CMD 实例，提供失控事件。
+   *            CMD instance providing the lost-control event.
+   * @param referee Referee 实例，用于绘制 UI。
+   *                Referee instance used to draw the UI.
+   * @param superpower SuperPower 实例，提供电容能量。
+   *                   SuperPower instance providing the capacitor energy.
+   * @param hip_leftfront_can 左前关节电机所在的 CAN 总线。
+   *                          CAN bus of the left-front hip motor.
+   * @param hip_leftback_can 左后关节电机所在的 CAN 总线。
+   *                         CAN bus of the left-back hip motor.
+   * @param hip_rightfront_can 右前关节电机所在的 CAN 总线。
+   *                           CAN bus of the right-front hip motor.
+   * @param hip_rightback_can 右后关节电机所在的 CAN 总线。
+   *                          CAN bus of the right-back hip motor.
+   * @param wheel_left 左轮电机。
+   *                   Left wheel motor.
+   * @param wheel_right 右轮电机。
+   *                    Right wheel motor.
+   * @param param 构造参数。
+   *              Construction parameters.
    */
   Wheelleg(
       CMD& cmd,
@@ -209,9 +286,12 @@ class Wheelleg
   }
 
   /**
-   * @brief 线程函数
+   * @brief 控制线程函数：每 2 ms 读取订阅的 Topic，更新反馈、计算并输出。
+   *        Control thread function: every 2 ms read the subscribed Topics, update the
+   *        feedback, compute and output.
    *
-   * @param wheelleg
+   * @param wheelleg Wheelleg 实例。
+   *                 Wheelleg instance.
    */
   static void ThreadFunc(Wheelleg* wheelleg)
   {
@@ -267,8 +347,9 @@ class Wheelleg
   }
 
   /**
-   * @brief 更新反馈和状态量
-   *
+   * @brief 更新时间、电机反馈、腿长与摆角、机体速度和支持力等状态量。
+   *        Update the time, the motor feedback, the leg lengths and swing angles, the
+   *        body speed and the support forces.
    */
   void UpdateFeedback()
   {
@@ -482,8 +563,9 @@ class Wheelleg
   }
 
   /**
-   * @brief 计算输出
-   *
+   * @brief 按当前模式计算目标位移、LQR 输出、腿长控制量与各电机输出。
+   *        Compute the target displacement, the LQR output, the leg-length control and
+   *        the motor outputs for the current mode.
    */
   void Calculate()
   {
@@ -1293,7 +1375,9 @@ class Wheelleg
   }
 
   /**
-   * @brief out输出
+   * @brief 限幅关节力矩，并按当前模式向轮电机与关节电机下发命令。
+   *        Limit the hip torques and send the commands to the wheel and hip motors
+   *        according to the current mode.
    */
   void Control()
   {
@@ -1459,6 +1543,11 @@ class Wheelleg
     }
   }
 
+  /**
+   * @brief 按步骤轮流绘制客户端 UI，由 52 ms 周期的定时任务调用。
+   *        Draw the client UI step by step in turn; called by the timer task with a
+   *        period of 52 ms.
+   */
   void InitUi()
   {
     const uint16_t id = referee_->GetRobotID();
@@ -1624,14 +1713,20 @@ class Wheelleg
   }
 
   /**
-   * @brief 获取底盘的事件处理器
-   * @return LibXR::Event& 事件处理器的引用
+   * @brief 获取底盘事件处理器。
+   *        Get the chassis event handler.
+   *
+   * @return 事件处理器的引用。
+   *         Reference to the event handler.
    */
   LibXR::Event& GetEvent() { return event_handler_; }
 
   /**
-   * @brief  事件处理器，根据传入的事件ID执行相应操作
-   * @param event_id 触发的事件ID
+   * @brief 事件处理函数，按 `WheellegEvent` 切换模式。
+   *        Event handler that switches the mode according to `WheellegEvent`.
+   *
+   * @param event_id 触发的事件 ID。
+   *                 Triggered event ID.
    */
   void EventHandler(uint32_t event_id)
   {
@@ -1657,6 +1752,14 @@ class Wheelleg
     }
   }
 
+  /**
+   * @brief 切换运行模式；从 RELAX 或 RESET 进入其他模式时复位 PID、解算器和目标状态。
+   *        Switch the run mode; entering another mode from RELAX or RESET resets the
+   *        PIDs, the solvers and the target state.
+   *
+   * @param mode 目标模式。
+   *             Target mode.
+   */
   void SetMode(Mode mode)
   {
     if (mode == current_mode_)
@@ -1698,6 +1801,13 @@ class Wheelleg
     current_mode_ = mode;
   }
 
+  /**
+   * @brief 获取超级电容能量比例。
+   *        Get the supercapacitor energy ratio.
+   *
+   * @return `SuperPower::GetCapEnergy()` 的值，`superpower_` 为空时为 0。
+   *         The value of `SuperPower::GetCapEnergy()`, 0 when `superpower_` is null.
+   */
   float GetCapEnergy()
   {
     if (superpower_ != nullptr)
@@ -1707,6 +1817,26 @@ class Wheelleg
     return 0;
   }
 
+  /**
+   * @brief 自适应融合滤波：按轮速推算的角速度与陀螺仪角速度的偏差调整系数，
+   *        融合轮速与加速度积分。
+   *        Adaptive fusion filter: adjust the gain from the deviation between the
+   *        wheel-derived angular velocity and the gyroscope angular velocity, and fuse
+   *        the wheel speed with the integrated acceleration.
+   *
+   * @param wz 轮速推算的机体角速度。
+   *           Body angular velocity derived from the wheel speeds.
+   * @param gyro_z 陀螺仪 z 轴角速度。
+   *               Gyroscope z-axis angular velocity.
+   * @param speed 轮速推算的速度。
+   *              Speed derived from the wheel speeds.
+   * @param accl 加速度。
+   *             Acceleration.
+   * @param dt_ 周期，单位 s。
+   *            Period in s.
+   * @return 融合后的速度估计。
+   *         The fused speed estimate.
+   */
   float AdaptFilter(float wz, float gyro_z, float speed, float accl, float dt_)
   {
     adaptfilter_argum_.xhatminus = adaptfilter_argum_.xhat + accl * dt_;
@@ -1720,6 +1850,15 @@ class Wheelleg
     return adaptfilter_argum_.xhat;
   }
 
+  /**
+   * @brief 把角度归一化到 [-pi, pi]。
+   *        Normalize an angle to [-pi, pi].
+   *
+   * @param angle 输入角度，单位 rad。
+   *              Input angle in rad.
+   * @return 归一化后的角度。
+   *         The normalized angle.
+   */
   float RangeAnglePI(float angle)
   {
     while (angle > static_cast<float>(LibXR::PI))
@@ -1733,6 +1872,19 @@ class Wheelleg
     return angle;
   }
 
+  /**
+   * @brief 以不超过 `max_step` 的步长从 `current` 向 `target` 逼近。
+   *        Approach `target` from `current` with a step of at most `max_step`.
+   *
+   * @param current 当前值。
+   *                Current value.
+   * @param target 目标值。
+   *               Target value.
+   * @param max_step 最大步长。
+   *                 Maximum step.
+   * @return 逼近一步后的值。
+   *         The value after one step.
+   */
   float RampTowards(float current, float target, float max_step)
   {
     float diff = target - current;
@@ -1747,6 +1899,21 @@ class Wheelleg
     return target;
   }
 
+  /**
+   * @brief `current` 与 `target` 的差超过 `max_step` 时返回 `current - max_step`，
+   *        否则返回 `target`。
+   *        Return `current - max_step` when the difference between `current` and `target`
+   *        exceeds `max_step`, otherwise return `target`.
+   *
+   * @param current 当前值。
+   *                Current value.
+   * @param target 目标值。
+   *               Target value.
+   * @param max_step 最大步长。
+   *                 Maximum step.
+   * @return 计算结果。
+   *         The result.
+   */
   float RampBack(float current, float target, float max_step)
   {
     float diff = fabsf(target - current);
@@ -1757,6 +1924,21 @@ class Wheelleg
     return target;
   }
 
+  /**
+   * @brief `current` 与 `target` 的差超过 `max_step` 时返回 `current + max_step`，
+   *        否则返回 `target`。
+   *        Return `current + max_step` when the difference between `current` and `target`
+   *        exceeds `max_step`, otherwise return `target`.
+   *
+   * @param current 当前值。
+   *                Current value.
+   * @param target 目标值。
+   *               Target value.
+   * @param max_step 最大步长。
+   *                 Maximum step.
+   * @return 计算结果。
+   *         The result.
+   */
   float RampForaward(float current, float target, float max_step)
   {
     float diff = fabsf(target - current);
