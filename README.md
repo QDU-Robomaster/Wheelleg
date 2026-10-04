@@ -20,7 +20,7 @@
 
 模式：`RELAX`（轮电机放松、关节电机失能）、`RESET`（收腿复位，满足腿长、摆角和 pitch 条件后自动进入 `STAND`）、`STAND`、`ROTOR`（小陀螺）、`JUMP`、`STAIR`（上台阶）。`STAND` / `ROTOR` 下轮电机未就绪、关节电机异常、摆角或 pitch 超限时，放松电机并切到 `RESET`。轮电机上电后连续在线 2.5 s 视为就绪。
 
-模式切换通过 `GetEvent()` 返回的 `LibXR::Event` 激活 `WheellegEvent::SET_MODE_*`（RELAX / STAND / ROTOR / RESET / JUMP）完成；`CMD` 触发 `CMD_EVENT_LOST_CTRL` 时切到 `RELAX`。进入 `STAND` / `ROTOR` 时激活 `NOW_MODE_MOVE`，进入 `RESET` 时激活 `NOW_MODE_RESET`。
+模式切换通过 `GetEvent()` 返回的 `LibXR::Event` 激活 `Wheelleg::WheellegEvent::SET_MODE_*`（RELAX / STAND / ROTOR / RESET / JUMP）完成；`CMD` 触发 `CMD_EVENT_LOST_CTRL` 时切到 `RELAX`。进入 `STAND` / `ROTOR` 时激活 `NOW_MODE_MOVE`，进入 `RESET` 时激活 `NOW_MODE_RESET`。
 
 构造时还注册一个 52 ms 周期的 LibXR 定时器任务，通过 `Referee` 在第 1 图层轮流绘制客户端 UI：模式文字、yaw 指示点、pitch 线、左右腿、辅助线和超级电容能量条。
 
@@ -40,7 +40,7 @@ The control thread `WheellegThread` (priority MEDIUM, stack depth `task_stack_de
 
 Modes: `RELAX` (wheel motors relaxed, hip motors disabled), `RESET` (legs retracted and reset, entering `STAND` automatically once the leg length, swing angle and pitch conditions are met), `STAND`, `ROTOR` (spinning), `JUMP` and `STAIR` (stair climbing). In `STAND` / `ROTOR`, when the wheel motors are not ready, a hip motor reports an error, or the swing angle or pitch exceeds its limit, the motors are relaxed and the mode switches to `RESET`. The wheel motors are ready after being online for 2.5 s continuously after power-up.
 
-Mode switching is done by activating `WheellegEvent::SET_MODE_*` (RELAX / STAND / ROTOR / RESET / JUMP) on the `LibXR::Event` returned by `GetEvent()`; when `CMD` raises `CMD_EVENT_LOST_CTRL` the mode switches to `RELAX`. Entering `STAND` / `ROTOR` activates `NOW_MODE_MOVE`, and entering `RESET` activates `NOW_MODE_RESET`.
+Mode switching is done by activating `Wheelleg::WheellegEvent::SET_MODE_*` (RELAX / STAND / ROTOR / RESET / JUMP) on the `LibXR::Event` returned by `GetEvent()`; when `CMD` raises `CMD_EVENT_LOST_CTRL` the mode switches to `RELAX`. Entering `STAND` / `ROTOR` activates `NOW_MODE_MOVE`, and entering `RESET` activates `NOW_MODE_RESET`.
 
 On construction a LibXR timer task with a period of 52 ms is also registered; it draws the client UI through `Referee` on layer 1 in turn: the mode text, the yaw indicator dot, the pitch line, the left and right legs, the auxiliary lines and the supercapacitor energy bar.
 
@@ -129,9 +129,9 @@ Configuration parameters (`Param`, the defaults are in the YAML of section 4):
 
 ## 4. 配置示例 / Configuration Example
 
-`xrobot instance add QDU-Robomaster/Wheelleg` 写入的实例，依赖填写为其他 Module 实例的 id 与 BSP 中注册的 CAN 名称，`param` 保持写出的默认值。`k_poly_coefficient` 是 40 行 6 列的 C++ 文本，这里仅节选前两行：
+`xrobot instance add QDU-Robomaster/Wheelleg` 写入的实例，依赖填写为其他模块实例的 id 与 BSP 中注册的 CAN 名称，`param` 保持写出的默认值。`k_poly_coefficient` 是 40 行 6 列的 C++ 文本，这里每行写一组系数：
 
-An instance written by `xrobot instance add QDU-Robomaster/Wheelleg`, with the dependencies set to the ids of other Module instances and to CAN names registered by the BSP, and `param` kept at the written defaults. `k_poly_coefficient` is C++ text with 40 rows and 6 columns, of which only the first two rows are excerpted here:
+An instance written by `xrobot instance add QDU-Robomaster/Wheelleg`, with the dependencies set to the ids of other Module instances and to CAN names registered by the BSP, and `param` kept at the written defaults. `k_poly_coefficient` is C++ text with 40 rows and 6 columns, written here with one row per line:
 
 ```yaml
 modules:
@@ -223,13 +223,52 @@ modules:
             static_f0: '{115.0f, 115.0f}'
             wheel_radius: 0.06f
             max_speed: 2.8f
-            k_poly_coefficient: '{{-2.4926f, -0.0085557f, -1.4237f, 3.7989f, -1.0144f, -0.45636f}, {-4.6042f, -0.102f, -2.2408f, 6.1744f, -2.2534f, -2.0711f}, ...}'
+            k_poly_coefficient: '{{-2.4926f, -0.0085557f, -1.4237f, 3.7989f, -1.0144f, -0.45636f},
+              {-4.6042f, -0.102f, -2.2408f, 6.1744f, -2.2534f, -2.0711f},
+              {-2.8566f, -5.9061f, 2.4219f, 6.7974f, -2.3655f, -0.20335f},
+              {-0.64595f, -1.7651f, 0.94845f, 2.0205f, -0.64978f, -0.34658f},
+              {-5.448f, -43.896f, 10.787f, 41.689f, 12.233f, -10.496f},
+              {-0.64886f, -3.8569f, 0.6421f, -0.093447f, -0.9605f, -0.7316f},
+              {-3.9692f, 19.076f, -41.709f, -21.817f, 13.501f, 12.258f},
+              {-0.27776f, 0.8594f, -4.2875f, -0.6321f, 1.4201f, -3.2795f},
+              {-3.0172f, 8.7533f, 2.546f, -9.207f, -7.7938f, 1.7617f},
+              {-1.0966f, 3.277f, 0.85392f, -3.5286f, -2.8362f, 0.82452f},
+              {-2.4926f, -1.4237f, -0.0085557f, -0.45636f, -1.0144f, 3.7989f},
+              {-4.6042f, -2.2408f, -0.102f, -2.0711f, -2.2534f, 6.1744f},
+              {2.8566f, -2.4219f, 5.9061f, 0.20335f, 2.3655f, -6.7974f},
+              {0.64595f, -0.94845f, 1.7651f, 0.34658f, 0.64978f, -2.0205f},
+              {-3.9692f, -41.709f, 19.076f, 12.258f, 13.501f, -21.817f},
+              {-0.27776f, -4.2875f, 0.8594f, -3.2795f, 1.4201f, -0.6321f},
+              {-5.448f, 10.787f, -43.896f, -10.496f, 12.233f, 41.689f},
+              {-0.64886f, 0.6421f, -3.8569f, -0.7316f, -0.9605f, -0.093447f},
+              {-3.0172f, 2.546f, 8.7533f, 1.7617f, -7.7938f, -9.207f},
+              {-1.0966f, 0.85392f, 3.277f, 0.82452f, -2.8362f, -3.5286f},
+              {3.8207f, 13.933f, -28.338f, -33.981f, 15.526f, 37.126f},
+              {6.8208f, 24.75f, -50.247f, -59.267f, 27.54f, 65.109f},
+              {-6.4027f, 9.014f, 4.0619f, -9.9542f, 30.275f, -6.3869f},
+              {-1.5633f, 2.5677f, 0.87157f, -2.7875f, 7.9043f, -1.0069f},
+              {10.631f, 73.518f, -15.946f, -93.499f, 109.25f, 20.843f},
+              {1.8344f, 2.6874f, -3.3599f, 3.6775f, 0.81105f, 6.3348f},
+              {1.1533f, -15.818f, -62.482f, 11.797f, -89.649f, 54.039f},
+              {-0.39484f, 0.79831f, -1.0451f, -4.6228f, -0.42961f, -5.669f},
+              {-14.198f, -18.013f, 6.6946f, 18.333f, 5.8638f, -5.7598f},
+              {-5.6903f, -7.0214f, 2.9398f, 7.4797f, 1.9812f, -2.8077f},
+              {3.8207f, -28.338f, 13.933f, 37.126f, 15.526f, -33.981f},
+              {6.8208f, -50.247f, 24.75f, 65.109f, 27.54f, -59.267f},
+              {6.4027f, -4.0619f, -9.014f, 6.3869f, -30.275f, 9.9542f},
+              {1.5633f, -0.87157f, -2.5677f, 1.0069f, -7.9043f, 2.7875f},
+              {1.1533f, -62.482f, -15.818f, 54.039f, -89.649f, 11.797f},
+              {-0.39484f, -1.0451f, 0.79831f, -5.669f, -0.42961f, -4.6228f},
+              {10.631f, -15.946f, 73.518f, 20.843f, 109.25f, -93.499f},
+              {1.8344f, -3.3599f, 2.6874f, 6.3348f, 0.81105f, 3.6775f},
+              {-14.198f, 6.6946f, -18.013f, -5.7598f, 5.8638f, 18.333f},
+              {-5.6903f, 2.9398f, -7.0214f, -2.8077f, 1.9812f, 7.4797f}}'
           chassis_cmd_topic_name: "chassis_cmd"
 ```
 
-`cmd`、`referee`、`superpower`、`motor_wheel_left`、`motor_wheel_right` 是其他 Module 实例的 id，列在本实例之前，分别由 `QDU-Robomaster/CMD`、`QDU-Robomaster/Referee`、`QDU-Robomaster/SuperPower` 和两个 `QDU-Robomaster/RMMotor` 实例提供。发布 `atomimu_*` 的 `QDU-Robomaster/AtomImuCan` 实例也加入配置。
+`cmd`、`ref`、`super_power`、`motor_wheel_left`、`motor_wheel_right` 是其他模块实例的 id，列在本实例之前，分别由 `QDU-Robomaster/CMD`、`QDU-Robomaster/Referee`、`QDU-Robomaster/SuperPower` 和两个 `QDU-Robomaster/RMMotor` 实例提供。发布 `atomimu_*` 的 `QDU-Robomaster/AtomImuCan` 实例也加入配置。
 
-`cmd`, `referee`, `superpower`, `motor_wheel_left` and `motor_wheel_right` are ids of other Module instances, listed before this instance and provided by the `QDU-Robomaster/CMD`, `QDU-Robomaster/Referee`, `QDU-Robomaster/SuperPower` and two `QDU-Robomaster/RMMotor` instances respectively. The `QDU-Robomaster/AtomImuCan` instance that publishes `atomimu_*` is added to the configuration as well.
+`cmd`, `ref`, `super_power`, `motor_wheel_left` and `motor_wheel_right` are ids of other Module instances, listed before this instance and provided by the `QDU-Robomaster/CMD`, `QDU-Robomaster/Referee`, `QDU-Robomaster/SuperPower` and two `QDU-Robomaster/RMMotor` instances respectively. The `QDU-Robomaster/AtomImuCan` instance that publishes `atomimu_*` is added to the configuration as well.
 
 ## 5. 依赖与硬件 / Dependencies and Hardware
 
