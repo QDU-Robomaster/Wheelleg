@@ -27,6 +27,7 @@ depends:
 #include <cstdint>
 #include <memory>
 
+#include "AtomImuCan.hpp"
 #include "CMD.hpp"
 #include "DMMotor.hpp"
 #include "LegVmc.hpp"
@@ -397,9 +398,13 @@ class Wheelleg
   {
     LibXR::Topic::ASyncSubscriber<CMD::ChassisCMD> cmd_sub(
         wheelleg->chassis_cmd_topic_name_);
-    LibXR::Topic::ASyncSubscriber<Euler> eulr_sub("atomimu_eulr");
-    LibXR::Topic::ASyncSubscriber<Vector3> gyro_sub("atomimu_gyro");
-    LibXR::Topic::ASyncSubscriber<Vector3> accl_sub("atomimu_absaccl");
+    // AtomImuCan 用自己的载荷类型发布这些 Topic；用 Wheelleg 自己的 Euler/Vector3 订阅会
+    // 触发 LibXR 的类型契约检查（fatal error）。按发布方类型订阅后逐字段转换。
+    // AtomImuCan publishes these Topics with its own payload types; subscribing with
+    // Wheelleg's own Euler/Vector3 fails the LibXR type contract (fatal error).
+    LibXR::Topic::ASyncSubscriber<AtomImuCan::Euler> eulr_sub("atomimu_eulr");
+    LibXR::Topic::ASyncSubscriber<AtomImuCan::Vector3> gyro_sub("atomimu_gyro");
+    LibXR::Topic::ASyncSubscriber<AtomImuCan::Vector3> accl_sub("atomimu_absaccl");
     LibXR::Topic::ASyncSubscriber<float> yaw_sub("yawmotor_angle");
 
     cmd_sub.StartWaiting();
@@ -418,17 +423,20 @@ class Wheelleg
       }
       if (eulr_sub.Available())
       {
-        wheelleg->eulr_ = eulr_sub.GetData();
+        const auto& eulr = eulr_sub.GetData();
+        wheelleg->eulr_ = {eulr.pit, eulr.rol, eulr.yaw};
         eulr_sub.StartWaiting();
       }
       if (gyro_sub.Available())
       {
-        wheelleg->gyro_ = gyro_sub.GetData();
+        const auto& gyro = gyro_sub.GetData();
+        wheelleg->gyro_ = {gyro.x, gyro.y, gyro.z};
         gyro_sub.StartWaiting();
       }
       if (accl_sub.Available())
       {
-        wheelleg->accl_ = accl_sub.GetData();
+        const auto& accl = accl_sub.GetData();
+        wheelleg->accl_ = {accl.x, accl.y, accl.z};
         accl_sub.StartWaiting();
       }
       if (yaw_sub.Available())
